@@ -33,7 +33,10 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.6',
-    zip_safe=True,
+    install_requires=[
+        'fire',
+        'requests',
+    ],    zip_safe=True,
     entry_pointes={
         "console_script": ["zmf = zmf-cli.zmf:main"]
     }
