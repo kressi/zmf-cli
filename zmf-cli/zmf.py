@@ -77,6 +77,47 @@ class ChangemanZmf:
     def revert(self, package):
         print('revert')
 
+    def search(self, package, title=None):
+        data = {
+            'package': package
+        }
+        if title:
+            data['packageTitle'] = title
+        url = urljoin(self.url, 'package/search')
+        resp = self.__session.get(url, data=data)
+        print('Status: ', resp.status_code)
+        if resp.ok:
+            print(json.dumps(resp.josn(), indent=4, sort_keys=True))
+
+    # def create(
+    #         self,
+    #         applName,
+    #         title,
+    #         description,
+    #         workChangeRequest,
+    #         requestorDept,
+    #         requestorName,
+    #         requestorPhone,
+    #         siteName,
+    #         installDate,
+    #         fromInstallTime,
+    #         toInstallTime,
+    #         contactName,
+    #         contactPhone,
+    #         alternateContactName,
+    #         alternateContactPhone ):
+    #     data = {
+    #         'package': package
+    #     }
+    #     if title:
+    #         data['packageTitle'] = title
+    #     url = urljoin(self.url, 'package')
+    #     resp = self.__session.post(url, data=data)
+    #     print('Status: ', resp.status_code)
+    #     if resp.ok:
+    #         print(json.dumps(resp.josn(), indent=4, sort_keys=True))
+
+
 
 def main():
     fire.Fire(ChangemanZmf)
