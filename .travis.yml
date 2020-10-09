@@ -1,9 +1,9 @@
 language: python
 
 python:
-- '3.8'
+- '3.9'
 
-install:
+script:
 - python --version
 - pip --version
 
