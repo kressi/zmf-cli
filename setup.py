@@ -12,7 +12,7 @@ with open("README.md", "r") as fh:
 
 def version():
     if os.getenv('TRAVIS_BRANCH', '') == 'develop':
-        return __version__ + '.' + os.getenv('TRAVIS_COMMIT', '')
+        return __version__ + '.' + os.getenv('TRAVIS_COMMIT', '')[:8]
     else:
         return __version__
 
