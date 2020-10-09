@@ -1,0 +1,27 @@
+language: python
+
+python:
+- '3.8'
+
+install:
+- python --version
+- pip --version
+
+deploy:
+  provider: pypi
+  server: https://test.pypi.org/legacy/
+  user: "__token__"
+  password:
+    secure: "hLmxUgfUcdjHs94Z4EjWxqrrMdufXKKoyKGvmacDHBPEVqiVLC29ElOsBrhhTyxYKFq9r1tfLpbN/3GkpGZhDyAloTXZpXV8v+v7MW2OhseQ7COUbpm8AP5EKSBAuakA25Z02DOwb/bT121eT/Dt4vFtVsgwT4yuEIn1wZYlf0/rs1Q63uUwQyZ1W5iZ8dDmOnVpXzrsYIrlqgYIx561fUy1bUSokxQOFyTk5a9gY2dUGwAJbMN8NKWFRFF+D2+DCPAVLyOLEc8/8qeVGhCAN6VaXcCFLYseQtQ9JuhJeF9A2NUYmfWmnnANNe9duw84YMF32ijTL7uO2Bo6x6r3zM1zAI8f7+yJtu8LHi1ntuRe7nqoRM4ZYsMuRmjdmrqT68m4uSMkJpJNv4cWbwttgVjDzEbQ4RrpMzcSfpgBU7GBpt5n2LLyYGl46TFRPJMvTrXbobbDsMIH7SmZhtSrFLQ+kTs8kq5bg4zowFUJVV7i2xTU3nFY/vs+vvqNpqVrzmfRuE5dY0Zd5awGmzHYGeCYuzz+e09BhMVE+AMJVtvA50r9PXTWyWlIA9T6d3pVhCw8h2XITSDcQkqtJnuCEEE+TIU4xKeTiIzyuA3kPrLdSkTS+7SVkK1ZQQ15TRcTidIW7q97t0hgG5sBZmKuGH20TuB7kdjz/sqS3aTr26M="
+  on:
+    branch: develop
+
+deploy:
+  provider: pypi
+  user: kressi
+  password:
+    secure: uvevXqgNMzbEs59v6uW76XvDkpGmwExA7ezqqJcOYkeLpn9aIkIku5+zmpDK5ALB3yIjBTBUXfeHvx1G8D+mnwPaH0XBYwMIxzL7h0CoJ1epKmMvfhqoidgs+EAvwYDi7dIXt0U+xTbjcuVVt5PFPBKHJoEOqq/yDqL5M8sIoZH/lekwuxtB2uADQ0Wpdaqpn7/Cnn039E2qZr6lNZDA6bRysYGWphEe7RtmReFgFrHMW01URuxaRlJ7QJ39lNfKB96h1KtFkQEXIe4GsQUgXxVt4RGNRRNSMocqcx+L6MIplyORw4WFfR5BvWozOiu+g/e8OfaaAVqinQTCLrzHw2UJLSRAbHj8HEvSeCy9shsl/Tb/ioPZttKtNSVb0/q5cv+0fEJWTp//xvUCjJ0ksKxr4Eu9EklWyBf1LmyWYf8YpjP4qSqi//CtrHNxsAY+7TfZCbepeZ51a+qRNhGQCqKgW9FbK8nAfR3cJGjCrtTw07eDGqZ1KiCd5MvIucUoclgSUgaN6Pmr1eZhSqgBvKXb8vDPQwMqTuNoeXIMjrFRgEnmKnMtVwzaENSdVuBrEjYqmlJyBXALasqGLA/PAqEgKXGI9etH4gCxyj/CNhO22hgs4wEM5ffO2UNNYCRb8TH3j2KYrty4Xnf2NSKlZiLL/zoNqF7ucYOMbM4iVKE=
+  edge: true
+  distributions: sdist bdist_wheel
+  on:
+    tags: true

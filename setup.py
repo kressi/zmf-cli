@@ -3,7 +3,7 @@ import os
 
 here = os.path.abspath(os.path.dirname(__file__))
 
-version_path = os.path.join(here, 'terminalplot', 'version.py')
+version_path = os.path.join(here, 'zmfcli', 'version.py')
 with open(version_path, encoding='utf-8') as f:
     exec(f.read())
 
@@ -17,7 +17,7 @@ def version():
         return __version__
 
 setuptools.setup(
-    name="zmf-cli",
+    name="zmfcli",
     version=version(),
     author="Michael Kressibucher",
     author_email="michael.kressibucher@gmail.com",
@@ -36,8 +36,9 @@ setuptools.setup(
     install_requires=[
         'fire',
         'requests',
-    ],    zip_safe=True,
-    entry_pointes={
-        "console_script": ["zmf = zmf-cli.zmf:main"]
+    ],
+    zip_safe=True,
+    entry_points={
+        "console_scripts": ["zmf = zmfcli.zmf:main"]
     }
 )
