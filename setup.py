@@ -42,3 +42,4 @@ setuptools.setup(
         "console_scripts": ["zmf = zmfcli.zmf:main"]
     }
 )
+
