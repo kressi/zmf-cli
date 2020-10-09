@@ -30,7 +30,7 @@ jobs:
 
 install:
 - pip install --upgrade pip
-- pip install pytest pytest-cov
+- pip install pytest pytest-cov requests-mock
 
 script:
 - pytest --cov=zmfcli
