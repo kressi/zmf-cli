@@ -16,6 +16,8 @@ jobs:
         user: "__token__"
         password:
           secure: "hLmxUgfUcdjHs94Z4EjWxqrrMdufXKKoyKGvmacDHBPEVqiVLC29ElOsBrhhTyxYKFq9r1tfLpbN/3GkpGZhDyAloTXZpXV8v+v7MW2OhseQ7COUbpm8AP5EKSBAuakA25Z02DOwb/bT121eT/Dt4vFtVsgwT4yuEIn1wZYlf0/rs1Q63uUwQyZ1W5iZ8dDmOnVpXzrsYIrlqgYIx561fUy1bUSokxQOFyTk5a9gY2dUGwAJbMN8NKWFRFF+D2+DCPAVLyOLEc8/8qeVGhCAN6VaXcCFLYseQtQ9JuhJeF9A2NUYmfWmnnANNe9duw84YMF32ijTL7uO2Bo6x6r3zM1zAI8f7+yJtu8LHi1ntuRe7nqoRM4ZYsMuRmjdmrqT68m4uSMkJpJNv4cWbwttgVjDzEbQ4RrpMzcSfpgBU7GBpt5n2LLyYGl46TFRPJMvTrXbobbDsMIH7SmZhtSrFLQ+kTs8kq5bg4zowFUJVV7i2xTU3nFY/vs+vvqNpqVrzmfRuE5dY0Zd5awGmzHYGeCYuzz+e09BhMVE+AMJVtvA50r9PXTWyWlIA9T6d3pVhCw8h2XITSDcQkqtJnuCEEE+TIU4xKeTiIzyuA3kPrLdSkTS+7SVkK1ZQQ15TRcTidIW7q97t0hgG5sBZmKuGH20TuB7kdjz/sqS3aTr26M="
+        edge: true
+        distributions: sdist bdist_wheel
     - stage: deploy prod
       if: tag IS present AND branch = master
       install: skip
