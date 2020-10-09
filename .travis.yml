@@ -7,7 +7,7 @@ install:
 - python --version
 - pip --version
 
-deploy:
+deploy test:
   provider: pypi
   server: https://test.pypi.org/legacy/
   user: "__token__"
