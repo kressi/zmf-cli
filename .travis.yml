@@ -10,6 +10,7 @@ jobs:
       if: branch != master
       install: skip
       script: skip
+      after_success: True
       deploy:
         provider: pypi
         server: https://test.pypi.org/legacy/
@@ -22,6 +23,7 @@ jobs:
       if: tag IS present AND branch = master
       install: skip
       script: skip
+      after_success: True
       deploy:
         provider: pypi
         user: kressi
