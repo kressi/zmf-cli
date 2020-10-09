@@ -1,8 +1,8 @@
-# zmf-cli
-Command line interface for ChangeMan ZMF through REST API
+[![Build Status](https://travis-ci.org/kressi/zmf-cli.svg?branch=main)](https://travis-ci.org/kressi/zmf-cli)
 
-
-
+# zmfcli
+Command line interface (cli) for ChangeMan ZMF through REST API. Using
+[fire](https://github.com/google/python-fire) to create the cli.
 
 ## ChangeMan ZMF Documents
 - [ChangeMan ZMF 8.1 - Web Services Getting Started Guide](https://supportline.microfocus.com/documentation/books/ChangeManZMF/8.1.4/ChangeManZMFWebServices/ZMF%20Web%20Services%20Getting%20Started%20Guide.pdf)
