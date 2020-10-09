@@ -11,8 +11,8 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 def version():
-    if os.getenv('TRAVIS_BUILD_STAGE_NAME', '') == 'Deploy test':
-        return __version__ + '.' + os.getenv('TRAVIS_BUILD_NUMBER', '')
+    if os.getenv('TRAVIS_BRANCH', '') == 'develop':
+        return __version__ + '.' + os.getenv('TRAVIS_COMMIT', '')
     else:
         return __version__
 
