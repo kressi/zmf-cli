@@ -6,8 +6,8 @@ python:
 
 install:
 - pip install --upgrade pip
-- pip install .
-- pip install pytest pytest-cov requests-mock coveralls
+- pip install '.[tests]'
+- pip install coveralls
 
 script:
 - pytest --cov=zmfcli
