@@ -22,7 +22,7 @@ deploy:
     distributions: sdist bdist_wheel
     skip_existing: true
     on:
-      branch: develop
+      condition: NOT branch = master
   - provider: pypi
     user: kressi
     password:
