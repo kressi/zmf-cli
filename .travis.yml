@@ -7,10 +7,13 @@ python:
 install:
 - pip install --upgrade pip
 - pip install .
-- pip install pytest pytest-cov requests-mock
+- pip install pytest pytest-cov requests-mock coveralls
 
 script:
 - pytest --cov=zmfcli
+
+after_success:
+- coveralls
 
 deploy:
   - provider: pypi
@@ -22,7 +25,7 @@ deploy:
     distributions: sdist bdist_wheel
     skip_existing: true
     on:
-      condition: NOT branch = master
+      condition: develop
   - provider: pypi
     user: kressi
     password:
