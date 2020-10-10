@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/kressi/zmf-cli.svg?branch=main)](https://travis-ci.org/kressi/zmf-cli)
+[![Coverage Status](https://coveralls.io/repos/github/kressi/zmf-cli/badge.svg?branch=main)](https://coveralls.io/github/kressi/zmf-cli?branch=main)
 
 # zmfcli
 Command line interface (cli) for ChangeMan ZMF through REST API. Using
