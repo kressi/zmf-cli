@@ -121,7 +121,3 @@ class ChangemanZmf:
 
 def main():
     fire.Fire(ChangemanZmf)
-
-
-if __name__ == '__main__':
-    main()
