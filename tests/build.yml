@@ -1,0 +1,49 @@
+build:
+  default.sre:
+    language: DELTACOB
+    buildproc: CMNCOB2
+    compileOption: ''
+    linkOptions: ''
+    useDb2PreCompileOption: N
+    userOption01: N
+    userOption02: N
+  APPE0000.sre:
+    language: DELTACOB
+    buildproc: CMNCOB2
+    compileOption: ''
+    linkOptions: ''
+    useDb2PreCompileOption: N
+    userOption01: N
+    userOption02: N
+  APPE0001.sre:
+    language: DELTACOB
+    buildproc: CMNCOB2
+    compileOption: ''
+    linkOptions: ''
+    useDb2PreCompileOption: N
+    userOption01: N
+    userOption02: N
+  APPE0002.sre:
+    language: DELTACOB
+    buildproc: CMNCOB2
+    compileOption: ''
+    linkOptions: ''
+    useDb2PreCompileOption: N
+    userOption01: N
+    userOption02: N
+  default.srb:
+    language: DELTACOB
+    buildproc: CMNCOB2
+    compileOption: ''
+    linkOptions: ''
+    useDb2PreCompileOption: N
+    userOption01: N
+    userOption02: N
+  APPB0003.srb:
+    language: DELTACOB
+    buildproc: CMNCOB2
+    compileOption: ''
+    linkOptions: ''
+    useDb2PreCompileOption: N
+    userOption01: N
+    userOption02: N

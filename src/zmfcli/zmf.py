@@ -63,7 +63,6 @@ class ChangemanZmf:
                 if resp.ok:
                     print(json.dumps(resp.josn(), indent=4, sort_keys=True))
 
-
     def audit(self, package):
         print('audit')
 
@@ -116,7 +115,6 @@ class ChangemanZmf:
     #     print('Status: ', resp.status_code)
     #     if resp.ok:
     #         print(json.dumps(resp.josn(), indent=4, sort_keys=True))
-
 
 
 def main():
