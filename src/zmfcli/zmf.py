@@ -24,7 +24,11 @@ class ChangemanZmf:
 
     def checkin(self, package, pds, components):
         """checkin components from a partitioned dataset (PDS)"""
-        data = {"package": package, "chkInSourceLocation": 1, "sourceStorageMeans": 6}
+        data = {
+            "package": package,
+            "chkInSourceLocation": 1,
+            "sourceStorageMeans": 6,
+        }
         for tp, comps in groupby(sorted(components, key=extension), extension):
             dt = data.copy()
             dt["componentType"] = tp.upper()
