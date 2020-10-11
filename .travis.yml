@@ -23,11 +23,11 @@ jobs:
       stage: deploy prod
       if: branch = main
       script:
-        - twine upload --repository-url https://upload.pypi.org/legacy/ -u $PYPI_USER_PROD -p $PYPI_PWD_PROD dist/*
+        - twine upload dist/*
 
 install:
   - pip install --upgrade pip
-  - pip install '.[tests]'
+  - pip install .[tests]
 
 script:
   - flake8
