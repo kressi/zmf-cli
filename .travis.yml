@@ -9,7 +9,7 @@ install:
   - pip install '.[tests]'
 
 script:
-  - blake8
+  - flake8
   - black --check .
   - pytest --cov=zmfcli
 
