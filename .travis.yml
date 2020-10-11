@@ -18,7 +18,7 @@ jobs:
         - twine check dist/*
       script:
         - twine upload --skip-existing --repository testpypi dist/*
-      after_success: skip
+
     - <<: *stage_deploy
       stage: deploy prod
       if: branch = main
@@ -28,12 +28,10 @@ jobs:
 install:
   - pip install --upgrade pip
   - pip install .[tests]
+  - pip install coveralls
 
 script:
   - flake8
   - black --check .
   - pytest --cov=zmfcli
-
-after_success:
-  - pip install coveralls
   - coveralls
