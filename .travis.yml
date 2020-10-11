@@ -21,7 +21,7 @@ jobs:
   include:
     - &stage_deploy
       stage: deploy test
-      if: NOT branch = master
+      if: NOT branch = main
       install:
         - pip install --upgrade pip
         - pip install twine pep517
@@ -34,6 +34,6 @@ jobs:
       after_success: skip
     - <<: *stage_deploy
       stage: deploy prod
-      if: branch = master
+      if: branch = main
       script:
         - twine upload --repository-url https://upload.pypi.org/legacy/ -u $PYPI_USER_PROD -p $PYPI_PWD_PROD dist/*
