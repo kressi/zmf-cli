@@ -17,7 +17,7 @@ jobs:
         - python -m pep517.build .
         - twine check dist/*
       script:
-        - twine upload --skip-existing --repository-url https://test.pypi.org/legacy/ -u $PYPI_USER_TEST -p $PYPI_PWD_TEST dist/*
+        - twine upload --skip-existing --repository testpypi dist/*
       after_success: skip
     - <<: *stage_deploy
       stage: deploy prod
