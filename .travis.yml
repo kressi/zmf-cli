@@ -4,19 +4,6 @@ python:
   - '3.8.6'
   - '3.9-dev'
 
-install:
-  - pip install --upgrade pip
-  - pip install '.[tests]'
-
-script:
-  - flake8
-  - black --check .
-  - pytest --cov=zmfcli
-
-after_success:
-  - pip install coveralls
-  - coveralls
-
 jobs:
   include:
     - &stage_deploy
@@ -37,3 +24,16 @@ jobs:
       if: branch = main
       script:
         - twine upload --repository-url https://upload.pypi.org/legacy/ -u $PYPI_USER_PROD -p $PYPI_PWD_PROD dist/*
+
+install:
+  - pip install --upgrade pip
+  - pip install '.[tests]'
+
+script:
+  - flake8
+  - black --check .
+  - pytest --cov=zmfcli
+
+after_success:
+  - pip install coveralls
+  - coveralls
