@@ -1,19 +1,21 @@
 language: python
 
 python:
-- '3.8.6'
-- '3.9-dev'
+  - '3.8.6'
+  - '3.9-dev'
 
 install:
-- pip install --upgrade pip
-- pip install '.[tests]'
+  - pip install --upgrade pip
+  - pip install '.[tests]'
 
 script:
-- pytest --cov=zmfcli
+  - blake8
+  - black --check .
+  - pytest --cov=zmfcli
 
 after_success:
-- pip install coveralls
-- coveralls
+  - pip install coveralls
+  - coveralls
 
 jobs:
   include:
@@ -32,6 +34,6 @@ jobs:
       after_success: skip
     - <<: *stage_deploy
       stage: deploy prod
-      if: branch = master AND tag IS present
+      if: branch = master
       script:
         - twine upload --repository-url https://upload.pypi.org/legacy/  -u $PYPI_USER_PROD -p $PYPI_PWD_PROD dist/*
