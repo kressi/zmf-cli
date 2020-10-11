@@ -36,4 +36,4 @@ jobs:
       stage: deploy prod
       if: branch = master
       script:
-        - twine upload --repository-url https://upload.pypi.org/legacy/  -u $PYPI_USER_PROD -p $PYPI_PWD_PROD dist/*
+        - twine upload --repository-url https://upload.pypi.org/legacy/ -u $PYPI_USER_PROD -p $PYPI_PWD_PROD dist/*
