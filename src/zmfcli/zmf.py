@@ -52,7 +52,7 @@ class ChangemanZmf:
             "jobCard04": "//*",
         }
         for tp, comps in groupby(sorted(components, key=extension), extension):
-            if tp.upper() == "SRE":
+            if tp.lower() in ["sre", "srb"]:
                 dt = data.copy()
                 dt["componentType"] = tp.upper()
                 dt["component"] = [Path(c).stem for c in comps]
