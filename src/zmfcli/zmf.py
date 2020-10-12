@@ -38,7 +38,7 @@ class ChangemanZmf:
             resp = self.__session.put(url, data=dt)
             print("Status: ", resp.status_code)
             if resp.ok:
-                print(json.dumps(resp.josn(), indent=4, sort_keys=True))
+                print(json.dumps(resp.json(), indent=4, sort_keys=True))
 
     def build(self, package, components):
         """build source like components"""
@@ -60,7 +60,7 @@ class ChangemanZmf:
                 resp = self.__session.put(url, data=dt)
                 print("Status: ", resp.status_code)
                 if resp.ok:
-                    print(json.dumps(resp.josn(), indent=4, sort_keys=True))
+                    print(json.dumps(resp.json(), indent=4, sort_keys=True))
 
     def audit(self, package):
         print("audit")
@@ -83,7 +83,7 @@ class ChangemanZmf:
         resp = self.__session.get(url, data=data)
         print("Status: ", resp.status_code)
         if resp.ok:
-            print(json.dumps(resp.josn(), indent=4, sort_keys=True))
+            print(json.dumps(resp.json(), indent=4, sort_keys=True))
 
     # def create(
     #         self,
@@ -111,7 +111,7 @@ class ChangemanZmf:
     #     resp = self.__session.post(url, data=data)
     #     print('Status: ', resp.status_code)
     #     if resp.ok:
-    #         print(json.dumps(resp.josn(), indent=4, sort_keys=True))
+    #         print(json.dumps(resp.json(), indent=4, sort_keys=True))
 
 
 def main():
