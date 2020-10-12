@@ -8,6 +8,15 @@
 Command line interface (cli) for ChangeMan ZMF through REST API. Using
 [fire](https://github.com/google/python-fire) to create the cli.
 
+## Usage
+
+```bash
+export ZMF_REST_URL=https://example.com:8080/zmfrest
+export ZMF_REST_USER=username
+export ZMF_REST-PWD=password
+zmf build "APP 000001" "['src/SRE/APP00001.sre', 'src/SRB/APP00002.srb', 'src/SRB/APP00003.srb']"
+```
+
 ## ChangeMan ZMF Documents
 - [ChangeMan ZMF 8.1 - Web Services Getting Started Guide](https://supportline.microfocus.com/documentation/books/ChangeManZMF/8.1.4/ChangeManZMFWebServices/ZMF%20Web%20Services%20Getting%20Started%20Guide.pdf)
 - [ChangeMan ZMF - REST Services Getting Started Guide](https://www.microfocus.com/documentation/changeman-zmf/8.2.2/ZMF%20REST%20Services%20Getting%20Started%20Guide%20(Updated%2024%20October%202019).pdf)
