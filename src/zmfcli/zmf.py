@@ -43,7 +43,7 @@ class ChangemanZmf:
         package,
         components,
         procedure="CMNCOB2",
-        language="DELTACOB",
+        language="COBOL",
         db2Precompile=None,
     ):
         """build source like components"""
