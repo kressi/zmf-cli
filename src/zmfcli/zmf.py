@@ -12,6 +12,15 @@ def extension(file):
     return Path(file).suffix.lstrip(".")
 
 
+def jobcard(user, action="@"):
+    return {
+        "jobCard01": "//" + user + action[:1].upper() + " JOB 0,'CHANGEMAN',",
+        "jobCard02": "//         CLASS=A,MSGCLASS=A,",
+        "jobCard03": "//         NOTIFY=&SYSUID",
+        "jobCard04": "//*",
+    }
+
+
 class ChangemanZmf:
     def __init__(self, user=None, password=None, url=None):
         self.url = url if url else os.getenv("ZMF_REST_URL")
@@ -51,11 +60,8 @@ class ChangemanZmf:
             "package": package,
             "buildProc": procedure,
             "language": language,
-            "jobCard01": "//" + self.__user + "A JOB 0,'CHANGEMAN',",
-            "jobCard02": "//         CLASS=A,MSGCLASS=A,",
-            "jobCard03": "//         NOTIFY=&SYSUID",
-            "jobCard04": "//*",
         }
+        data.update(jobcard(self.__user, "build"))
         if db2Precompile:
             data["useDb2PreCompileOption"] = "Y"
         for tp, comps in groupby(sorted(components, key=extension), extension):
@@ -70,7 +76,16 @@ class ChangemanZmf:
                     print(json.dumps(resp.json(), indent=4, sort_keys=True))
 
     def audit(self, package):
-        print("audit")
+        data = {
+            "package": package,
+        }
+        data.update(jobcard(self.__user, "audit"))
+        dt = data.copy()
+        url = urljoin(self.url, "package/audit")
+        resp = self.__session.put(url, data=dt)
+        print("Status: ", resp.status_code)
+        if resp.ok:
+            print(json.dumps(resp.json(), indent=4, sort_keys=True))
 
     def promote(self, package):
         """promote a package"""
