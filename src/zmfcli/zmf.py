@@ -1,5 +1,3 @@
-#!/bin/env python
-
 import fire
 import json
 import os
@@ -40,17 +38,26 @@ class ChangemanZmf:
             if resp.ok:
                 print(json.dumps(resp.json(), indent=4, sort_keys=True))
 
-    def build(self, package, components):
+    def build(
+        self,
+        package,
+        components,
+        procedure="CMNCOB2",
+        language="DELTACOB",
+        db2Precompile=None,
+    ):
         """build source like components"""
         data = {
             "package": package,
-            "buildProc": "CMNCOB2",
-            "language": "DELTACOB",
+            "buildProc": procedure,
+            "language": language,
             "jobCard01": "//" + self.__user + "A JOB 0,'CHANGEMAN',",
             "jobCard02": "//         CLASS=A,MSGCLASS=A,",
             "jobCard03": "//         NOTIFY=&SYSUID",
             "jobCard04": "//*",
         }
+        if db2Precompile:
+            data["useDb2PreCompileOption"] = "Y"
         for tp, comps in groupby(sorted(components, key=extension), extension):
             if tp.lower() in ["sre", "srb"]:
                 dt = data.copy()
