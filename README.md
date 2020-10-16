@@ -10,11 +10,35 @@ Command line interface (cli) for ChangeMan ZMF through REST API. Using
 
 ## Usage
 
+Export credentials and url, so it is available in later requests.
 ```bash
 export ZMF_REST_URL=https://example.com:8080/zmfrest
 export ZMF_REST_USER=username
-export ZMF_REST-PWD=password
+export ZMF_REST_PWD=password
 zmf build "APP 000001" "['src/SRE/APP00001.sre', 'src/SRB/APP00002.srb', 'src/SRB/APP00003.srb']"
+```
+
+```bash
+cat <<'CONFIG' | zmf package /dev/stdin
+applName: APP
+createMethod: 0
+packageLevel: 1
+packageType: 1
+requestorDept: DEVB
+requestorName: DEVA
+requestorPhone: 01000000
+workChangeRequest: APP 000000
+packageTitle: DEV release/2021-12-31
+packageDesc: created with ZMF Rest API
+siteName: ZPLEX0
+installDate: 20211231
+fromInstallTime: 0000
+toInstallTime: 2359
+contactName: Timothy Leary
+contactPhone: 01000000
+alternateContactName: Terrence McKenna
+alternateContactPhone: 01000000
+CONFIG
 ```
 
 ## ChangeMan ZMF Documents

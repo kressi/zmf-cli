@@ -2,6 +2,7 @@ import fire
 import json
 import os
 import requests
+import yaml
 
 from itertools import groupby
 from pathlib import Path
@@ -107,33 +108,19 @@ class ChangemanZmf:
         if resp.ok:
             print(json.dumps(resp.json(), indent=4, sort_keys=True))
 
-    # def create(
-    #         self,
-    #         applName,
-    #         title,
-    #         description,
-    #         workChangeRequest,
-    #         requestorDept,
-    #         requestorName,
-    #         requestorPhone,
-    #         siteName,
-    #         installDate,
-    #         fromInstallTime,
-    #         toInstallTime,
-    #         contactName,
-    #         contactPhone,
-    #         alternateContactName,
-    #         alternateContactPhone ):
-    #     data = {
-    #         'package': package
-    #     }
-    #     if title:
-    #         data['packageTitle'] = title
-    #     url = urljoin(self.url, 'package')
-    #     resp = self.__session.post(url, data=data)
-    #     print('Status: ', resp.status_code)
-    #     if resp.ok:
-    #         print(json.dumps(resp.json(), indent=4, sort_keys=True))
+    def create(self, package_config, app=None, title=None):
+        with open(package_config, "r") as file:
+            config = yaml.safe_load(file)
+        data = {
+            "applName": app,
+            "packageTitle": title,
+        }
+        data.update(config)
+        url = urljoin(self.url, "package")
+        resp = self.__session.post(url, data=data)
+        print("Status: ", resp.status_code)
+        if resp.ok:
+            print(json.dumps(resp.json(), indent=4, sort_keys=True))
 
 
 def main():
