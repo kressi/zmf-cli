@@ -75,6 +75,20 @@ class ChangemanZmf:
                 if resp.ok:
                     print(json.dumps(resp.json(), indent=4, sort_keys=True))
 
+    def scratch(self, package, components):
+        data = {
+            "package": package,
+        }
+        for comp in components:
+            dt = data.copy()
+            dt["componentType"] = extension(comp).upper()
+            dt["oldComponent"] = Path(comp).stem
+            url = urljoin(self.url, "component/scratch")
+            resp = self.__session.put(url, data=dt)
+            print("Status: ", resp.status_code)
+            if resp.ok:
+                print(json.dumps(resp.json(), indent=4, sort_keys=True))
+
     def audit(self, package):
         data = {
             "package": package,
