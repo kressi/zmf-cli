@@ -19,7 +19,7 @@ zmf build "APP 000001" "['src/SRE/APP00001.sre', 'src/SRB/APP00002.srb', 'src/SR
 ```
 
 ```bash
-cat <<'CONFIG' | zmf package /dev/stdin
+cat <<'CONFIG' | zmf package
 applName: APP
 createMethod: 0
 packageLevel: 1
