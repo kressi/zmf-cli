@@ -104,6 +104,8 @@ class ChangemanZmf:
             exit(HTML_STATUS_NOK)
 
     def scratch(self, package, components):
+        result = []
+        resp_status = requests.codes.ok
         data = {
             "package": package,
         }
