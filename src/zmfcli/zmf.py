@@ -9,6 +9,9 @@ from pathlib import Path
 from urllib.parse import urljoin
 
 
+HTML_STATUS_NOK = 3
+
+
 def extension(file):
     return Path(file).suffix.lstrip(".")
 
@@ -44,9 +47,10 @@ class ChangemanZmf:
             dt["targetComponent"] = [Path(c).stem for c in comps]
             url = urljoin(self.url, "component/checkin")
             resp = self.__session.put(url, data=dt)
-            print("Status: ", resp.status_code)
-            if resp.ok:
-                print(json.dumps(resp.json(), indent=4, sort_keys=True))
+            if not resp.ok:
+                print("Status: ", resp.status_code)
+                exit(HTML_STATUS_NOK)
+            print(json.dumps(resp.json(), indent=4))
 
     def build(
         self,
@@ -72,9 +76,10 @@ class ChangemanZmf:
                 dt["component"] = [Path(c).stem for c in comps]
                 url = urljoin(self.url, "component/build")
                 resp = self.__session.put(url, data=dt)
-                print("Status: ", resp.status_code)
-                if resp.ok:
-                    print(json.dumps(resp.json(), indent=4, sort_keys=True))
+                if not resp.ok:
+                    print("Status: ", resp.status_code)
+                    exit(HTML_STATUS_NOK)
+                print(json.dumps(resp.json(), indent=4))
 
     def scratch(self, package, components):
         data = {
