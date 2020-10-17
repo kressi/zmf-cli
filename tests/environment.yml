@@ -1,45 +1,36 @@
 branch:
   default:
-    description: Package for 'default' branch
+    packageTitle: PGM <branch-name>
+    description: created with ZMF Rest API
     workChangeRequest: PGM 00000000
     requestorDept: DEVB
     requestorName: DEVA
     requestorPhone: 01000000
     siteName: ZPLEX0
-    installDate: 20201231
+    installDate: 29991231
     fromInstallTime: 0000
     toInstallTime: 2359
     contactName: Timothy Leary
     contactPhone: 01000000
     alternateContactName: Terrence McKenna
     alternateContactPhone: 01000000
-  release/2020-06-21:
-    description: Package for 'release/2020-06-21' branch
-    workChangeRequest: PGM 00000000
-    requestorDept: DEVB
-    requestorName: DEVA
-    requestorPhone: 01000000
-    siteName: ZPLEX0
-    installDate: 20201231
-    fromInstallTime: 0000
-    toInstallTime: 2359
-  feature/shiny-button:
-    description: Package for 'feature/shiny-button' branch
-    workChangeRequest: PGM 00000000
-    requestorDept: DEVB
-    requestorName: DEVA
-    requestorPhone: 01000000
-    siteName: ZPLEX0
-    installDate: 20201231
-    fromInstallTime: 0000
-    toInstallTime: 2359
   develop:
-    description: Package for 'develop' branch
-    workChangeRequest: PGM 00000000
+    packageTitle: PGM develop
     requestorDept: DEVB
     requestorName: DEVA
     requestorPhone: 01000000
     siteName: ZPLEX0
-    installDate: 20201231
-    fromInstallTime: 0000
-    toInstallTime: 2359
+  release/2020-06-21:
+    packageTitle: PGM release/2020-06-21
+    workChangeRequest: PGM 43294301
+    requestorDept: DEVB
+    requestorName: DEVA
+    requestorPhone: 01000000
+    siteName: ZPLEX0
+    installDate: 20200612
+  feature/shiny-button:
+    packageTitle: PGM feature/shiny-button
+    requestorDept: DEVB
+    requestorName: DEVA
+    requestorPhone: 01000000
+    siteName: ZPLEX0
