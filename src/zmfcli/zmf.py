@@ -25,6 +25,12 @@ def jobcard(user, action="@"):
     }
 
 
+def exit_if_nok(status_code):
+    if status_code != requests.codes.ok:
+        print("Status: ", status_code)
+        exit(HTML_STATUS_NOK)
+
+
 class ChangemanZmf:
     def __init__(self, user=None, password=None, url=None):
         self.url = url if url else os.getenv("ZMF_REST_URL")
@@ -35,6 +41,8 @@ class ChangemanZmf:
 
     def checkin(self, package, pds, components):
         """checkin components from a partitioned dataset (PDS)"""
+        result = []
+        resp_status = requests.codes.ok
         data = {
             "package": package,
             "chkInSourceLocation": 1,
@@ -48,9 +56,15 @@ class ChangemanZmf:
             url = urljoin(self.url, "component/checkin")
             resp = self.__session.put(url, data=dt)
             if not resp.ok:
-                print("Status: ", resp.status_code)
-                exit(HTML_STATUS_NOK)
-            print(json.dumps(resp.json(), indent=4))
+                resp_status = resp.status_code
+                break
+            result.append(resp.json())
+        if resp_status == requests.codes.ok:
+            return result
+        else:
+            print(json.dumps(result), indent=4)
+            print("Status: ", resp_status)
+            exit(HTML_STATUS_NOK)
 
     def build(
         self,
@@ -61,6 +75,8 @@ class ChangemanZmf:
         db2Precompile=None,
     ):
         """build source like components"""
+        result = []
+        resp_status = requests.codes.ok
         data = {
             "package": package,
             "buildProc": procedure,
@@ -77,9 +93,15 @@ class ChangemanZmf:
                 url = urljoin(self.url, "component/build")
                 resp = self.__session.put(url, data=dt)
                 if not resp.ok:
-                    print("Status: ", resp.status_code)
-                    exit(HTML_STATUS_NOK)
-                print(json.dumps(resp.json(), indent=4))
+                    resp_status = resp.status_code
+                    break
+                result.append(resp.json())
+        if resp_status == requests.codes.ok:
+            return result
+        else:
+            print(json.dumps(result), indent=4)
+            print("Status: ", resp_status)
+            exit(HTML_STATUS_NOK)
 
     def scratch(self, package, components):
         data = {
@@ -91,9 +113,16 @@ class ChangemanZmf:
             dt["oldComponent"] = Path(comp).stem
             url = urljoin(self.url, "component/scratch")
             resp = self.__session.put(url, data=dt)
-            print("Status: ", resp.status_code)
-            if resp.ok:
-                print(json.dumps(resp.json(), indent=4, sort_keys=True))
+            if not resp.ok:
+                resp_status = resp.status_code
+                break
+            result.append(resp.json())
+        if resp_status == requests.codes.ok:
+            return result
+        else:
+            print(json.dumps(result), indent=4)
+            print("Status: ", resp_status)
+            exit(HTML_STATUS_NOK)
 
     def audit(self, package):
         data = {
@@ -103,9 +132,8 @@ class ChangemanZmf:
         dt = data.copy()
         url = urljoin(self.url, "package/audit")
         resp = self.__session.put(url, data=dt)
-        print("Status: ", resp.status_code)
-        if resp.ok:
-            print(json.dumps(resp.json(), indent=4, sort_keys=True))
+        exit_if_nok(resp.status_code)
+        return resp.json()
 
     def promote(self, package):
         """promote a package"""
@@ -121,9 +149,8 @@ class ChangemanZmf:
         data = {"packageTitle": title}
         url = urljoin(self.url, "package/search")
         resp = self.__session.get(url, data=data)
-        print("Status: ", resp.status_code)
-        if resp.ok:
-            print(json.dumps(resp.json(), indent=4, sort_keys=True))
+        exit_if_nok(resp.status_code)
+        return resp.json()
 
     def create_package(
         self, package_config="/dev/stdin", app=None, title=None
@@ -137,9 +164,8 @@ class ChangemanZmf:
         data.update(config)
         url = urljoin(self.url, "package")
         resp = self.__session.post(url, data=data)
-        print("Status: ", resp.status_code)
-        if resp.ok:
-            print(json.dumps(resp.json(), indent=4, sort_keys=True))
+        exit_if_nok(resp.status_code)
+        return resp.json()
 
 
 def main():
