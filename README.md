@@ -18,6 +18,7 @@ export ZMF_REST_PWD=password
 zmf build "APP 000001" "['src/SRE/APP00001.sre', 'src/SRB/APP00002.srb', 'src/SRB/APP00003.srb']"
 ```
 
+Create package from a config
 ```bash
 cat <<'CONFIG' | zmf create-package
 applName: APP
@@ -39,6 +40,11 @@ contactPhone: 01000000
 alternateContactName: Terrence McKenna
 alternateContactPhone: 01000000
 CONFIG
+```
+
+Pretty print response message with Python
+```bash
+zmf checkin "APP 000001" "PDS.BASE.DIR" "['src/SRE/APP00001.sre']" | python -m json.tools
 ```
 
 ## ChangeMan ZMF Documents
