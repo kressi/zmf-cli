@@ -112,17 +112,15 @@ class ChangemanZmf:
     def revert(self, package):
         print("revert")
 
-    def search(self, package, title=None):
-        data = {"package": package}
-        if title:
-            data["packageTitle"] = title
+    def search_package(self, title):
+        data = {"packageTitle": title}
         url = urljoin(self.url, "package/search")
         resp = self.__session.get(url, data=data)
         print("Status: ", resp.status_code)
         if resp.ok:
             print(json.dumps(resp.json(), indent=4, sort_keys=True))
 
-    def create(self, package_config="/dev/stdin", app=None, title=None):
+    def create_package(self, package_config="/dev/stdin", app=None, title=None):
         with open(package_config, "r") as file:
             config = yaml.safe_load(file)
         data = {
