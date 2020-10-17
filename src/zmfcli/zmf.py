@@ -120,7 +120,9 @@ class ChangemanZmf:
         if resp.ok:
             print(json.dumps(resp.json(), indent=4, sort_keys=True))
 
-    def create_package(self, package_config="/dev/stdin", app=None, title=None):
+    def create_package(
+        self, package_config="/dev/stdin", app=None, title=None
+    ):
         with open(package_config, "r") as file:
             config = yaml.safe_load(file)
         data = {
