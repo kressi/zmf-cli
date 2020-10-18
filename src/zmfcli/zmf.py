@@ -147,12 +147,20 @@ class ChangemanZmf:
     def revert(self, package):
         print("revert")
 
-    def search_package(self, title):
-        data = {"packageTitle": title}
+    def search_package(self, app, title):
+        data = {
+            "package": app + "*",
+            "packageTitle": title,
+        }
         url = urljoin(self.url, "package/search")
         resp = self.__session.get(url, data=data)
         exit_if_nok(resp.status_code)
-        return resp.json()
+        resp_json = resp.json()
+        pkg_id = ""
+        if resp_json["returnCode"] == "00":
+            # TODO handle response with multiple packages
+            pkg_id = resp_json["result"][1]["package"]
+        return pkg_id
 
     def create_package(
         self, package_config="/dev/stdin", app=None, title=None
@@ -170,14 +178,16 @@ class ChangemanZmf:
         return resp.json()
 
     def get_package(self, package_config="/dev/stdin", app=None, title=None):
-        search_title = ""
-        if title:
-            search_title = title
-        else:
+        search_title = title
+        search_app = app
+        if not search_app or not search_title:
             with open(package_config, "r") as file:
                 config = yaml.safe_load(file)
-                search_title = config["packageTitle"]
-        pkg_found = self.search_package(search_title)
+                if not search_title:
+                    search_title = config["packageTitle"]
+                if not search_app:
+                    search_app = config["applName"]
+        pkg_found = self.search_package(search_app, search_title)
         if pkg_found:
             pkg_id = pkg_found
         else:
