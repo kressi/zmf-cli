@@ -1,6 +1,7 @@
 import logging
 import os
 import json
+import sys
 
 from itertools import groupby
 from pathlib import Path
@@ -171,7 +172,7 @@ class ChangemanZmf:
         return pkg_id
 
     def create_package(
-        self, package_config="/dev/stdin", app=None, title=None
+        self, package_config=sys.stdin, app=None, title=None
     ):
         with open(package_config, "r") as file:
             config = yaml.safe_load(file)
@@ -185,7 +186,7 @@ class ChangemanZmf:
         exit_if_nok(resp.status_code)
         return resp.json()
 
-    def get_package(self, package_config="/dev/stdin", app=None, title=None):
+    def get_package(self, package_config=sys.stdin, app=None, title=None):
         search_title = title
         search_app = app
         if not search_app or not search_title:
