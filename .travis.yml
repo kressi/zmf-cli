@@ -32,6 +32,7 @@ install:
 
 script:
   - flake8
+  - black --diff .
   - black --check .
   - pytest --cov=zmfcli
   - coveralls
