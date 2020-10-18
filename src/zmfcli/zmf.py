@@ -171,9 +171,7 @@ class ChangemanZmf:
             pkg_id = resp_json["result"][1]["package"]
         return pkg_id
 
-    def create_package(
-        self, package_config=sys.stdin, app=None, title=None
-    ):
+    def create_package(self, package_config=sys.stdin, app=None, title=None):
         with open(package_config, "r") as file:
             config = yaml.safe_load(file)
         data = {
