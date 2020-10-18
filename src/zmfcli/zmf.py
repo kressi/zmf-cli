@@ -1,6 +1,6 @@
+import json
 import logging
 import os
-import json
 import sys
 
 from itertools import groupby
@@ -36,17 +36,18 @@ def exit_if_nok(status_code):
 
 
 class ChangemanZmf:
-    def __init__(
-        self, user=None, password=None, url=None, loglevel=logging.NOTSET
-    ):
+    def __init__(self, user=None, password=None, url=None, verbose=False):
         self.url = url if url else os.getenv("ZMF_REST_URL")
         self.__user = user if user else os.getenv("ZMF_REST_USER")
         self.__password = password if password else os.getenv("ZMF_REST_PWD")
         self.__session = requests.session()
         self.__session.auth = (self.__user, self.__password)
-        self.__loglevel = loglevel
-        if self.__loglevel == logging.DEBUG:
+        self.__logger = logging.getLogger(__name__)
+        if verbose:
+            self.__logger.setLevel(logging.DEBUG)
             debug_requests_on()
+        else:
+            self.__logger.setLevel(logging.WARNING)
 
     def checkin(self, package, pds, components):
         """checkin components from a partitioned dataset (PDS)"""
