@@ -169,6 +169,21 @@ class ChangemanZmf:
         exit_if_nok(resp.status_code)
         return resp.json()
 
+    def get_package(self, package_config="/dev/stdin", app=None, title=None):
+        search_title = ""
+        if title:
+            search_title = title
+        else:
+            with open(package_config, "r") as file:
+                config = yaml.safe_load(file)
+                search_title = config["packageTitle"]
+        pkg_found = self.search_package(search_title)
+        if pkg_found:
+            pkg_id = pkg_found
+        else:
+            pkg_id = self.create_package(package_config, app, title)
+        return pkg_id
+
 
 def main():
     fire.Fire(ChangemanZmf)
