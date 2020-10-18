@@ -1,13 +1,16 @@
-import fire
-import json
+import logging
 import os
-import requests
-import yaml
+import json
 
 from itertools import groupby
 from pathlib import Path
 from urllib.parse import urljoin
 
+import fire
+import requests
+import yaml
+
+from .logrequests import debug_requests_on
 
 HTML_STATUS_NOK = 3
 
@@ -32,12 +35,17 @@ def exit_if_nok(status_code):
 
 
 class ChangemanZmf:
-    def __init__(self, user=None, password=None, url=None):
+    def __init__(
+        self, user=None, password=None, url=None, loglevel=logging.NOTSET
+    ):
         self.url = url if url else os.getenv("ZMF_REST_URL")
         self.__user = user if user else os.getenv("ZMF_REST_USER")
         self.__password = password if password else os.getenv("ZMF_REST_PWD")
         self.__session = requests.session()
         self.__session.auth = (self.__user, self.__password)
+        self.__loglevel = loglevel
+        if self.__loglevel == logging.DEBUG:
+            debug_requests_on()
 
     def checkin(self, package, pds, components):
         """checkin components from a partitioned dataset (PDS)"""

@@ -27,7 +27,7 @@ def debug_requests_off():
 
 @contextlib.contextmanager
 def debug_requests():
-    """with debug_requests(): requests.get('http://httpbin.org/')"""
+    """with debug_requests(): requests.get("http://httpbin.org/")"""
     debug_requests_on()
     yield
     debug_requests_off()
