@@ -154,7 +154,7 @@ class ChangemanZmf:
         pkg_id = None
         if resp["returnCode"] == ZMF_STATUS_OK:
             # TODO handle response with multiple packages
-            pkg_id = resp["result"][1]["package"]
+            pkg_id = resp["result"][0]["package"]
         return pkg_id
 
     def create_package(self, package_config=sys.stdin, app=None, title=None):
@@ -168,7 +168,7 @@ class ChangemanZmf:
         resp = self.__execute(requests.Session.post, "package", data)
         if not resp:
             exit(RC_HTML_STATUS_NOK)
-        return resp["result"][1]["package"]
+        return resp["result"][0]["package"]
 
     def get_package(self, package_config=sys.stdin, app=None, title=None):
         search_title = title
