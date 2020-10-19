@@ -10,6 +10,7 @@ all: lint test build install
 
 init:
 	python -m pip install .[tests]
+	python -m pip install build
 
 lint:
 	black .
@@ -17,10 +18,9 @@ lint:
 
 test:
 	pytest --cov=zmfcli
-	python -m pep517.check .
 
 build:
-	python -m pep517.build .
+	python -m build .
 
 install: build
 	python -m pip install dist/*
