@@ -1,4 +1,5 @@
 # https://stackoverflow.com/a/24588289/5498201
+# https://requests.readthedocs.io/en/latest/api/
 
 import logging
 import contextlib

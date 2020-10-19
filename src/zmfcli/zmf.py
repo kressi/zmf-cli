@@ -12,21 +12,7 @@ import yaml
 
 from .logrequests import debug_requests_on
 
-RC_HTML_STATUS_NOK = 3
 ZMF_STATUS_OK = "00"
-
-
-def extension(file):
-    return Path(file).suffix.lstrip(".")
-
-
-def jobcard(user, action="@"):
-    return {
-        "jobCard01": "//" + user + action[:1].upper() + " JOB 0,'CHANGEMAN',",
-        "jobCard02": "//         CLASS=A,MSGCLASS=A,",
-        "jobCard03": "//         NOTIFY=&SYSUID",
-        "jobCard04": "//*",
-    }
 
 
 class ChangemanZmf:
@@ -34,29 +20,18 @@ class ChangemanZmf:
         self.url = url if url else os.getenv("ZMF_REST_URL")
         self.__user = user if user else os.getenv("ZMF_REST_USER")
         self.__password = password if password else os.getenv("ZMF_REST_PWD")
-        self.__session = requests.session()
-        self.__session.auth = (self.__user, self.__password)
+        logging.basicConfig()
         self.logger = logging.getLogger(__name__)
+        self.__session = ZmfSession(self.url, self.logger)
+        self.__session.auth = (self.__user, self.__password)
         if verbose:
             self.logger.setLevel(logging.DEBUG)
             debug_requests_on()
         else:
             self.logger.setLevel(logging.INFO)
 
-    def __execute(self, method, endpoint, data):
-        url = urljoin(self.url, endpoint)
-        self.logger.info(url)
-        self.logger.info(data)
-        resp = method(self.__session, url, data=data)
-        self.logger.info(resp)
-        if resp.ok:
-            return resp.json()
-        else:
-            return None
-
     def checkin(self, package, pds, components):
         """checkin components from a partitioned dataset (PDS)"""
-        resp_ok = True
         data = {
             "package": package,
             "chkInSourceLocation": 1,
@@ -67,14 +42,8 @@ class ChangemanZmf:
             dt["componentType"] = tp.upper()
             dt["sourceLib"] = pds + "." + tp.upper()
             dt["targetComponent"] = [Path(c).stem for c in comps]
-            resp = self.__execute(
-                requests.Session.put, "component/checkin", dt
-            )
-            if not resp:
-                resp_ok = False
-                break
-        if not resp_ok:
-            exit(RC_HTML_STATUS_NOK)
+            resp = self.__session.put("component/checkin", dt)
+            self.logger.info(resp)
 
     def build(
         self,
@@ -85,7 +54,6 @@ class ChangemanZmf:
         db2Precompile=None,
     ):
         """build source like components"""
-        resp_ok = True
         data = {
             "package": package,
             "buildProc": procedure,
@@ -99,17 +67,10 @@ class ChangemanZmf:
                 dt = data.copy()
                 dt["componentType"] = tp.upper()
                 dt["component"] = [Path(c).stem for c in comps]
-                resp = self.__execute(
-                    requests.Session.put, "component/build", dt
-                )
-                if not resp:
-                    resp_ok = False
-                    break
-        if not resp_ok:
-            exit(RC_HTML_STATUS_NOK)
+                resp = self.__session.put("component/build", dt)
+                self.logger.info(resp)
 
     def scratch(self, package, components):
-        resp_ok = True
         data = {
             "package": package,
         }
@@ -117,21 +78,14 @@ class ChangemanZmf:
             dt = data.copy()
             dt["componentType"] = extension(comp).upper()
             dt["oldComponent"] = Path(comp).stem
-            resp = self.__execute(
-                requests.Session.put, "component/scratch", dt
-            )
-            if not resp:
-                resp_ok = False
-                break
-        if not resp_ok:
-            exit(RC_HTML_STATUS_NOK)
+            resp = self.__session.put("component/scratch", dt)
+            self.logger.info(resp)
 
     def audit(self, package):
         data = {"package": package}
         data.update(jobcard(self.__user, "audit"))
-        resp = self.__execute(requests.Session.put, "package/audit", data)
-        if not resp:
-            exit(RC_HTML_STATUS_NOK)
+        resp = self.__session.put("package/audit", data)
+        self.logger.info(resp)
 
     def promote(self, package):
         """promote a package"""
@@ -148,44 +102,94 @@ class ChangemanZmf:
             "package": app + "*",
             "packageTitle": title,
         }
-        resp = self.__execute(requests.Session.get, "package/search", data)
-        if not resp:
-            exit(RC_HTML_STATUS_NOK)
+        resp = self.__session.get("package/search", data)
         pkg_id = None
-        if resp["returnCode"] == ZMF_STATUS_OK:
+        if (
+            resp["returnCode"] == ZMF_STATUS_OK
+            # search matches title as substring, check full title again
+            and resp["result"][0]["packageTitle"] == title
+        ):
             # TODO handle response with multiple packages
             pkg_id = resp["result"][0]["package"]
         return pkg_id
 
-    def create_package(self, package_config=sys.stdin, app=None, title=None):
-        with open(package_config, "r") as file:
-            config = yaml.safe_load(file)
+    def create_package(self, config_file="-", app=None, title=None):
         data = {
             "applName": app,
             "packageTitle": title,
         }
+        config = read_yaml(config_file)
         data.update(config)
-        resp = self.__execute(requests.Session.post, "package", data)
-        if not resp:
-            exit(RC_HTML_STATUS_NOK)
+        resp = self.__session.post("package", data)
         return resp["result"][0]["package"]
 
-    def get_package(self, package_config=sys.stdin, app=None, title=None):
+    def get_package(self, config_file="-", app=None, title=None):
         search_title = title
         search_app = app
         if not search_app or not search_title:
-            with open(package_config, "r") as file:
-                config = yaml.safe_load(file)
-                if not search_title:
-                    search_title = config["packageTitle"]
-                if not search_app:
-                    search_app = config["applName"]
+            config = read_yaml(config_file)
+            if not search_title:
+                search_title = config["packageTitle"]
+            if not search_app:
+                search_app = config["applName"]
         pkg_id = self.search_package(search_app, search_title)
         if not pkg_id:
-            pkg_id = self.create_package(package_config, app, title)
-        if not pkg_id:
-            exit(RC_HTML_STATUS_NOK)
+            pkg_id = self.create_package(config_file, app, title)
         return pkg_id
+
+
+# https://stackoverflow.com/a/51026159
+class ZmfSession(requests.Session):
+    def __init__(self, prefix_url=None, logger=None, *args, **kwargs):
+        super(ZmfSession, self).__init__(*args, **kwargs)
+        self.prefix_url = prefix_url
+        self.logger = logger
+
+    def request(self, method, url, data=None, *args, **kwargs):
+        url = urljoin(self.prefix_url, url)
+        if self.logger:
+            self.logger.info(url)
+            self.logger.info(data)
+        resp = super(ZmfSession, self).request(
+            method, url, data=data, *args, **kwargs
+        )
+        if self.logger:
+            self.logger.info(resp)
+        if not resp.ok:
+            raise RequestNok(resp.status_code)
+        return resp.json()
+
+
+class RequestNok(Exception):
+    pass
+
+
+class ZmfRestNok(Exception):
+    pass
+
+
+def extension(file):
+    return Path(file).suffix.lstrip(".")
+
+
+def jobcard(user, action="@"):
+    return {
+        "jobCard01": "//" + user + action[:1].upper() + " JOB 0,'CHANGEMAN',",
+        "jobCard02": "//         CLASS=A,MSGCLASS=A,",
+        "jobCard03": "//         NOTIFY=&SYSUID",
+        "jobCard04": "//*",
+    }
+
+
+def read_yaml(file):
+    if file in ["-", "/dev/stdin"]:
+        fh = sys.stdin
+    else:
+        fh = open(file)
+    data = yaml.safe_load(fh)
+    if file != "-":
+        fh.close()
+    return data
 
 
 def main():
