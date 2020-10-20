@@ -1,8 +1,14 @@
 # TODO: https://www.nerdwallet.com/blog/engineering/5-pytest-best-practices/
+# TODO: https://docs.pytest.org/en/stable/capture.html
+
+import io
+import json
+import sys
 
 import pytest
 import requests
 import responses
+import yaml
 
 from zmfcli.zmf import extension, jobcard
 
@@ -60,3 +66,24 @@ def test_extension(path, expected):
 )
 def test_jobcard(user, action, expected):
     assert jobcard(user, action) == expected
+
+def read_yaml(file):
+    if file in ["-", "/dev/stdin"]:
+        fh = sys.stdin
+    else:
+        fh = open(file)
+    data = yaml.safe_load(fh)
+    if file != "-":
+        fh.close()
+    return data
+
+yaml_data = {'A': [1, 2., False], 'B': {'1': True, '2': None}}
+
+def test_read_yaml_file(tmpdir):
+    file = tmpdir.join("test.yml")
+    file.write(json.dumps(yaml_data))
+    assert read_yaml(file) == yaml_data
+
+def test_read_yaml_stdin(monkeypatch):
+    monkeypatch.setattr('sys.stdin', io.StringIO(json.dumps(yaml_data)))
+    assert read_yaml("-") == yaml_data
