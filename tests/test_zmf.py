@@ -1,16 +1,62 @@
-import requests
-import requests_mock
-from zmfcli.zmf import extension
-
-
-session = requests.Session()
-adapter = requests_mock.Adapter()
-session.mount("mock://", adapter)
-
-adapter.register_uri("GET", "mock://test.com", text="data")
-
-
 # TODO: https://www.nerdwallet.com/blog/engineering/5-pytest-best-practices/
-# TODO: https://docs.pytest.org/en/stable/goodpractices.html
-def test_zmf():
-    assert extension("file/with/path/and.end") == "end"
+
+import pytest
+import requests
+import responses
+
+from zmfcli.zmf import extension, jobcard
+
+
+@pytest.mark.parametrize(
+    "path, expected",
+    [
+        ("file/with/path/and.ext", "ext"),
+        ("file/with/path/and", ""),
+        ("file/with/path.ext/and", ""),
+        ("file.ext", "ext"),
+        (".ext", ""),
+        (".", ""),
+        ("", ""),
+    ],
+)
+def test_extension(path, expected):
+    assert extension(path) == expected
+
+
+@pytest.mark.parametrize(
+    "user, action, expected",
+    [
+        (
+            "",
+            "",
+            {
+                "jobCard01": "// JOB 0,'CHANGEMAN',",
+                "jobCard02": "//         CLASS=A,MSGCLASS=A,",
+                "jobCard03": "//         NOTIFY=&SYSUID",
+                "jobCard04": "//*",
+            },
+        ),
+        (
+            "U000000",
+            "audit",
+            {
+                "jobCard01": "//U000000A JOB 0,'CHANGEMAN',",
+                "jobCard02": "//         CLASS=A,MSGCLASS=A,",
+                "jobCard03": "//         NOTIFY=&SYSUID",
+                "jobCard04": "//*",
+            },
+        ),
+        (
+            "U000000",
+            "AUDIT",
+            {
+                "jobCard01": "//U000000A JOB 0,'CHANGEMAN',",
+                "jobCard02": "//         CLASS=A,MSGCLASS=A,",
+                "jobCard03": "//         NOTIFY=&SYSUID",
+                "jobCard04": "//*",
+            },
+        ),
+    ],
+)
+def test_jobcard(user, action, expected):
+    assert jobcard(user, action) == expected
