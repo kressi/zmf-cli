@@ -1,16 +1,16 @@
-# TODO: https://www.nerdwallet.com/blog/engineering/5-pytest-best-practices/
-# TODO: https://docs.pytest.org/en/stable/capture.html
+# https://www.nerdwallet.com/blog/engineering/5-pytest-best-practices/
+# https://docs.pytest.org/en/stable/capture.html
+# https://docs.pytest.org/en/stable/fixture.html
 
 import io
 import json
 import sys
 
 import pytest
-import requests
 import responses
 import yaml
 
-from zmfcli.zmf import extension, jobcard
+from zmfcli.zmf import extension, jobcard, ChangemanZmf
 
 
 @pytest.mark.parametrize(
@@ -67,6 +67,7 @@ def test_extension(path, expected):
 def test_jobcard(user, action, expected):
     assert jobcard(user, action) == expected
 
+
 def read_yaml(file):
     if file in ["-", "/dev/stdin"]:
         fh = sys.stdin
@@ -77,13 +78,44 @@ def read_yaml(file):
         fh.close()
     return data
 
-yaml_data = {'A': [1, 2., False], 'B': {'1': True, '2': None}}
 
-def test_read_yaml_file(tmpdir):
-    file = tmpdir.join("test.yml")
-    file.write(json.dumps(yaml_data))
+yaml_data = {"A": [1, 2.0, False], "B": {"1": True, "2": None}}
+
+
+def test_read_yaml_file(tmp_path):
+    file = tmp_path / "test.yml"
+    file.write_text(json.dumps(yaml_data))
     assert read_yaml(file) == yaml_data
 
+
 def test_read_yaml_stdin(monkeypatch):
-    monkeypatch.setattr('sys.stdin', io.StringIO(json.dumps(yaml_data)))
+    monkeypatch.setattr("sys.stdin", io.StringIO(json.dumps(yaml_data)))
     assert read_yaml("-") == yaml_data
+
+
+ZMF_REST_URL = "https://example.com:8080/zmfrest"
+
+
+@pytest.fixture
+def zmfapi():
+    return ChangemanZmf(
+        user="U000000",
+        password="Pa$$w0rd",
+        url="https://example.com:8080/zmfrest/",
+    )
+
+
+@responses.activate
+def test_audit(zmfapi):
+    data = {
+        "returnCode": "00",
+        "message": "CMN2600I - The job to audit this package has been submitted.",  # noqa: E501
+        "reasonCode": "2600",
+    }
+    responses.add(
+        responses.PUT,
+        "https://example.com:8080/zmfrest/package/audit",
+        json=data,
+        status=200,
+    )
+    assert zmfapi.audit("APP 000000") is None
