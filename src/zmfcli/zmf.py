@@ -71,9 +71,7 @@ class ChangemanZmf:
                 self.logger.info(resp)
 
     def scratch(self, package, components):
-        data = {
-            "package": package,
-        }
+        data = {"package": package}
         for comp in components:
             dt = data.copy()
             dt["componentType"] = extension(comp).upper()
@@ -104,13 +102,14 @@ class ChangemanZmf:
         }
         resp = self.__session.get("package/search", data)
         pkg_id = None
-        if (
-            resp["returnCode"] == ZMF_STATUS_OK
-            # search matches title as substring, check full title again
-            and resp["result"][0]["packageTitle"] == title
-        ):
-            # TODO handle response with multiple packages
-            pkg_id = resp["result"][0]["package"]
+        if resp["returnCode"] == ZMF_STATUS_OK:
+            # in case multiple packages have been found take the youngest
+            for pkg in sorted(
+                resp["result"], key=lambda p: p["packageId"], reverse=True
+            ):
+                # search matches title as substring, ensure full title matches
+                if pkg["packageTitle"] == title:
+                    pkg_id = pkg["package"]
         return pkg_id
 
     def create_package(self, config_file="-", app=None, title=None):
