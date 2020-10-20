@@ -8,7 +8,7 @@ import json
 import pytest
 import responses
 
-from zmfcli.zmf import extension, jobcard, ChangemanZmf
+from zmfcli.zmf import extension, jobcard, read_yaml, ChangemanZmf
 
 
 @pytest.mark.parametrize(
