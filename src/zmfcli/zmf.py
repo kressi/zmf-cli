@@ -42,7 +42,7 @@ class ChangemanZmf:
             dt["componentType"] = tp.upper()
             dt["sourceLib"] = pds + "." + tp.upper()
             dt["targetComponent"] = [Path(c).stem for c in comps]
-            resp = self.__session.put("component/checkin", dt)
+            resp = self.__session.put("component/checkin", data=dt)
             self.logger.info(resp)
 
     def build(
@@ -67,7 +67,7 @@ class ChangemanZmf:
                 dt = data.copy()
                 dt["componentType"] = tp.upper()
                 dt["component"] = [Path(c).stem for c in comps]
-                resp = self.__session.put("component/build", dt)
+                resp = self.__session.put("component/build", data=dt)
                 self.logger.info(resp)
 
     def scratch(self, package, components):
@@ -76,13 +76,13 @@ class ChangemanZmf:
             dt = data.copy()
             dt["componentType"] = extension(comp).upper()
             dt["oldComponent"] = Path(comp).stem
-            resp = self.__session.put("component/scratch", dt)
+            resp = self.__session.put("component/scratch", data=dt)
             self.logger.info(resp)
 
     def audit(self, package):
         data = {"package": package}
         data.update(jobcard(self.__user, "audit"))
-        resp = self.__session.put("package/audit", data)
+        resp = self.__session.put("package/audit", data=data)
         self.logger.info(resp)
 
     def promote(self, package):
@@ -100,7 +100,7 @@ class ChangemanZmf:
             "package": app + "*",
             "packageTitle": title,
         }
-        resp = self.__session.get("package/search", data)
+        resp = self.__session.get("package/search", data=data)
         pkg_id = None
         if resp["returnCode"] == ZMF_STATUS_OK:
             # in case multiple packages have been found take the youngest
@@ -119,7 +119,7 @@ class ChangemanZmf:
         }
         config = read_yaml(config_file)
         data.update(config)
-        resp = self.__session.post("package", data)
+        resp = self.__session.post("package", data=data)
         return resp["result"][0]["package"]
 
     def get_package(self, config_file="-", app=None, title=None):
