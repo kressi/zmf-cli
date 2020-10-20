@@ -4,11 +4,9 @@
 
 import io
 import json
-import sys
 
 import pytest
 import responses
-import yaml
 
 from zmfcli.zmf import extension, jobcard, ChangemanZmf
 
@@ -66,17 +64,6 @@ def test_extension(path, expected):
 )
 def test_jobcard(user, action, expected):
     assert jobcard(user, action) == expected
-
-
-def read_yaml(file):
-    if file in ["-", "/dev/stdin"]:
-        fh = sys.stdin
-    else:
-        fh = open(file)
-    data = yaml.safe_load(fh)
-    if file != "-":
-        fh.close()
-    return data
 
 
 yaml_data = {"A": [1, 2.0, False], "B": {"1": True, "2": None}}
