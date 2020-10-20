@@ -116,6 +116,7 @@ def test_audit(zmfapi):
         responses.PUT,
         "https://example.com:8080/zmfrest/package/audit",
         json=data,
+        headers={'content-type': 'application/json'},
         status=200,
     )
     assert zmfapi.audit("APP 000000") is None
