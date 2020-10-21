@@ -12,6 +12,20 @@ import yaml
 
 from .logrequests import debug_requests_on
 
+SRC_DIR = 'src/'
+SOURCE_LIKE = ['sre', 'srb', 'src', 'sra']
+SOURCE_LOCATION = {
+    "development dataset": 1,
+    "package": 5,
+    "temp sequential dataset": 7,
+    "edit from package lib": "E",
+}
+SOURCE_STORAGE = {
+    "pds": 6,
+    "sequential dataset": 8,
+    "pds/extended": 9,
+    "hfs": "H",
+}
 ZMF_STATUS_OK = "00"
 
 
@@ -34,8 +48,8 @@ class ChangemanZmf:
         """checkin components from a partitioned dataset (PDS)"""
         data = {
             "package": package,
-            "chkInSourceLocation": 1,
-            "sourceStorageMeans": 6,
+            "chkInSourceLocation": SOURCE_LOCATION["development dataset"],
+            "sourceStorageMeans": SOURCE_STORAGE["pds"],
         }
         for tp, comps in groupby(sorted(components, key=extension), extension):
             dt = data.copy()
@@ -69,6 +83,24 @@ class ChangemanZmf:
                 dt["component"] = [Path(c).stem for c in comps]
                 resp = self.__session.put("component/build", data=dt)
                 self.logger.info(resp)
+
+    def build_config(self, package, components, config_file="-"):
+        """build source like components"""
+        allconfigs = read_yaml(config_file)
+        data = {
+            "package": package,
+            "buildProc": "CMNCOB2",
+            "language": "COBOL",
+        }
+        data.update(jobcard(self.__user, "build"))
+        source_comps = (c for c in components if extension(c) in SOURCE_LIKE)
+        for comp in source_comps
+            dt = data.copy()
+            dt.update(allconfigs.get(comp.removeprefix(SRC_DIR)))
+            dt["componentType"] = extension(comp)
+            dt["component"] = Path(comp).stem
+            resp = self.__session.put("component/build", data=dt)
+            self.logger.info(resp)
 
     def scratch(self, package, components):
         data = {"package": package}
@@ -184,6 +216,18 @@ def read_yaml(file):
     if file != "-":
         fh.close()
     return data
+
+
+def removeprefix(self: str, prefix: str, /) -> str:
+    if self.startswith(prefix):
+        return self[len(prefix):]
+    else:
+        return self[:]
+
+def get_build_config(all_configs, component):
+    config = all_configs.get(component.removeprefix(SRC_DIR))
+    config.update({"componentType": extension(component)})
+    return config
 
 
 def main():
