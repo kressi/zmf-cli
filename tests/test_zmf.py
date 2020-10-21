@@ -4,13 +4,11 @@
 
 import io
 import json
-import sys
 
 import pytest
 import responses
-import yaml
 
-from zmfcli.zmf import extension, jobcard, ChangemanZmf
+from zmfcli.zmf import extension, jobcard, read_yaml, ChangemanZmf
 
 
 @pytest.mark.parametrize(
@@ -68,17 +66,6 @@ def test_jobcard(user, action, expected):
     assert jobcard(user, action) == expected
 
 
-def read_yaml(file):
-    if file in ["-", "/dev/stdin"]:
-        fh = sys.stdin
-    else:
-        fh = open(file)
-    data = yaml.safe_load(fh)
-    if file != "-":
-        fh.close()
-    return data
-
-
 yaml_data = {"A": [1, 2.0, False], "B": {"1": True, "2": None}}
 
 
@@ -116,6 +103,7 @@ def test_audit(zmfapi):
         responses.PUT,
         "https://example.com:8080/zmfrest/package/audit",
         json=data,
+        headers={"content-type": "application/json"},
         status=200,
     )
     assert zmfapi.audit("APP 000000") is None
