@@ -12,8 +12,8 @@ import yaml
 
 from .logrequests import debug_requests_on
 
-SRC_DIR = 'src/'
-SOURCE_LIKE = ['sre', 'srb', 'src', 'sra']
+SRC_DIR = "src/"
+SOURCE_LIKE = ["sre", "srb", "src", "sra"]
 SOURCE_LOCATION = {
     "development dataset": 1,
     "package": 5,
@@ -94,7 +94,7 @@ class ChangemanZmf:
         }
         data.update(jobcard(self.__user, "build"))
         source_comps = (c for c in components if extension(c) in SOURCE_LIKE)
-        for comp in source_comps
+        for comp in source_comps:
             dt = data.copy()
             dt.update(allconfigs.get(comp.removeprefix(SRC_DIR)))
             dt["componentType"] = extension(comp)
@@ -220,9 +220,10 @@ def read_yaml(file):
 
 def removeprefix(self: str, prefix: str, /) -> str:
     if self.startswith(prefix):
-        return self[len(prefix):]
+        return self[len(prefix) :]
     else:
         return self[:]
+
 
 def get_build_config(all_configs, component):
     config = all_configs.get(component.removeprefix(SRC_DIR))
