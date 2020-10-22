@@ -4,7 +4,7 @@ import sys
 
 from itertools import groupby
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 from urllib.parse import urljoin
 
 import fire
@@ -31,7 +31,13 @@ ZMF_STATUS_OK = "00"
 
 
 class ChangemanZmf:
-    def __init__(self, user=None, password=None, url=None, verbose=False):
+    def __init__(
+        self,
+        user: Optional[str] = None,
+        password: Optional[str] = None,
+        url: Optional[str] = None,
+        verbose: bool = False,
+    ) -> None:
         self.url = url if url else os.getenv("ZMF_REST_URL")
         self.__user = user if user else os.getenv("ZMF_REST_USER")
         self.__password = password if password else os.getenv("ZMF_REST_PWD")
@@ -45,7 +51,7 @@ class ChangemanZmf:
         else:
             self.logger.setLevel(logging.INFO)
 
-    def checkin(self, package, pds, components):
+    def checkin(self, package: str, pds: str, components: List[str]):
         """checkin components from a partitioned dataset (PDS)"""
         data = {
             "package": package,
@@ -62,12 +68,12 @@ class ChangemanZmf:
 
     def build(
         self,
-        package,
-        components,
-        procedure="CMNCOB2",
-        language="COBOL",
-        db2Precompile=None,
-    ):
+        package: str,
+        components: List[str],
+        procedure: str = "CMNCOB2",
+        language: str = "COBOL",
+        db2Precompile: Optional[bool] = None,
+    ) -> None:
         """build source like components"""
         data = {
             "package": package,
@@ -85,7 +91,9 @@ class ChangemanZmf:
                 resp = self.__session.put("component/build", data=dt)
                 self.logger.info(resp)
 
-    def build_config(self, package, components, config_file="-"):
+    def build_config(
+        self, package: str, components: List[str], config_file: str = "-"
+    ) -> None:
         """build source like components"""
         allconfigs = read_yaml(config_file)
         data = {
@@ -103,7 +111,7 @@ class ChangemanZmf:
             resp = self.__session.put("component/build", data=dt)
             self.logger.info(resp)
 
-    def scratch(self, package, components):
+    def scratch(self, package: str, components: List[str]) -> None:
         data = {"package": package}
         for comp in components:
             dt = data.copy()
@@ -112,37 +120,39 @@ class ChangemanZmf:
             resp = self.__session.put("component/scratch", data=dt)
             self.logger.info(resp)
 
-    def audit(self, package):
+    def audit(self, package: str) -> None:
         data = {"package": package}
         data.update(jobcard(self.__user, "audit"))
         resp = self.__session.put("package/audit", data=data)
         self.logger.info(resp)
 
-    def promote(self, package):
+    def promote(self, package: str) -> None:
         """promote a package"""
         print("promote")
 
-    def freeze(self, package):
+    def freeze(self, package: str) -> None:
         print("freeze")
 
-    def revert(self, package):
+    def revert(self, package: str) -> None:
         print("revert")
 
-    def search_package(self, app, title):
+    def search_package(self, app: str, title: str) -> Optional[str]:
         data = {
             "package": app + "*",
             "packageTitle": title,
         }
         resp = self.__session.get("package/search", data=data)
         pkg_id = None
-        if resp["returnCode"] == ZMF_STATUS_OK:
+        if resp.get("returnCode") == ZMF_STATUS_OK:
             # in case multiple packages have been found take the youngest
             for pkg in sorted(
-                resp["result"], key=lambda p: p["packageId"], reverse=True
+                resp.get("result"),
+                key=lambda p: p.get("packageId"),
+                reverse=True,
             ):
                 # search matches title as substring, ensure full title matches
-                if pkg["packageTitle"] == title:
-                    pkg_id = pkg["package"]
+                if pkg.get("packageTitle") == title:
+                    pkg_id = pkg.get("package")
         return pkg_id
 
     def create_package(
@@ -158,7 +168,7 @@ class ChangemanZmf:
         config = read_yaml(config_file)
         data.update(config)
         resp = self.__session.post("package", data=data)
-        return resp["result"][0]["package"]
+        return resp.get("result", [{}])[0].get("package")
 
     def get_package(self, config_file="-", app=None, title=None):
         config = read_yaml(config_file)
@@ -174,12 +184,25 @@ class ChangemanZmf:
 
 # https://stackoverflow.com/a/51026159
 class ZmfSession(requests.Session):
-    def __init__(self, prefix_url=None, logger=None, *args, **kwargs):
+    def __init__(
+        self,
+        prefix_url: Optional[str] = None,
+        logger: Optional[logging.Logger] = None,
+        *args,
+        **kwargs,
+    ) -> None:
         super(ZmfSession, self).__init__(*args, **kwargs)
         self.prefix_url = prefix_url
         self.logger = logger
 
-    def request(self, method, url, data=None, *args, **kwargs):
+    def request(
+        self,
+        method: str,
+        url: str,
+        data: Optional[dict] = None,
+        *args,
+        **kwargs,
+    ) -> dict:
         url = urljoin(self.prefix_url, url)
         if self.logger:
             self.logger.info(url)
