@@ -96,7 +96,7 @@ class ChangemanZmf:
         source_comps = (c for c in components if extension(c) in SOURCE_LIKE)
         for comp in source_comps:
             dt = data.copy()
-            dt.update(allconfigs.get(comp.removeprefix(SRC_DIR)))
+            dt.update(allconfigs.get(removeprefix(comp, SRC_DIR)))
             dt["componentType"] = extension(comp)
             dt["component"] = Path(comp).stem
             resp = self.__session.put("component/build", data=dt)
@@ -225,12 +225,6 @@ def removeprefix(self: str, prefix: str, /) -> str:
         return self[len(prefix) :]
     else:
         return self[:]
-
-
-def get_build_config(all_configs, component):
-    config = all_configs.get(component.removeprefix(SRC_DIR))
-    config.update({"componentType": extension(component)})
-    return config
 
 
 def main():

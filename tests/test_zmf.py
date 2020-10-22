@@ -8,7 +8,13 @@ import json
 import pytest
 import responses
 
-from zmfcli.zmf import extension, jobcard, read_yaml, ChangemanZmf
+from zmfcli.zmf import (
+    extension,
+    jobcard,
+    read_yaml,
+    removeprefix,
+    ChangemanZmf,
+)
 
 
 @pytest.mark.parametrize(
@@ -64,6 +70,20 @@ def test_extension(path, expected):
 )
 def test_jobcard(user, action, expected):
     assert jobcard(user, action) == expected
+
+
+@pytest.mark.parametrize(
+    "string, prefix, expected",
+    [
+        ("", "pre", ""),
+        ("pre", "pre", ""),
+        ("prefix", "pre", "fix"),
+        ("prefix", "", "prefix"),
+        ("prefix", "fix", "prefix"),
+    ],
+)
+def test_removeprefix(string, prefix, expected):
+    assert removeprefix(string, prefix) == expected
 
 
 yaml_data = {"A": [1, 2.0, False], "B": {"1": True, "2": None}}
