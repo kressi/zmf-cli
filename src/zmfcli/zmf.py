@@ -28,6 +28,8 @@ SOURCE_STORAGE = {
     "hfs": "H",
 }
 ZMF_STATUS_OK = "00"
+ZMF_STATUS_INFO = "04"
+ZMF_STATUS_FAILURE = "08"
 
 
 class ChangemanZmf:
@@ -83,13 +85,15 @@ class ChangemanZmf:
         data.update(jobcard(self.__user, "build"))
         if db2Precompile:
             data["useDb2PreCompileOption"] = "Y"
-        for tp, comps in groupby(sorted(components, key=extension), extension):
-            if tp.lower() in ["sre", "srb"]:
-                dt = data.copy()
-                dt["componentType"] = tp.upper()
-                dt["component"] = [Path(c).stem for c in comps]
-                resp = self.__session.put("component/build", data=dt)
-                self.logger.info(resp)
+        source_comps = (c for c in components if extension(c) in SOURCE_LIKE)
+        for t, comps in groupby(
+            sorted(source_comps, key=extension), extension
+        ):
+            dt = data.copy()
+            dt["componentType"] = t.upper()
+            dt["component"] = [Path(c).stem for c in comps]
+            resp = self.__session.put("component/build", data=dt)
+            self.logger.info(resp)
 
     def build_config(
         self, package: str, components: List[str], config_file: str = "-"
@@ -168,6 +172,7 @@ class ChangemanZmf:
         config = read_yaml(config_file)
         data.update(config)
         resp = self.__session.post("package", data=data)
+        self.logger.info(resp)
         return resp.get("result", [{}])[0].get("package")
 
     def get_package(self, config_file="-", app=None, title=None):
