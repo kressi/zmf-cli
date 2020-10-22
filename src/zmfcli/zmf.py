@@ -4,6 +4,7 @@ import sys
 
 from itertools import groupby
 from pathlib import Path
+from typing import Dict, Optional
 from urllib.parse import urljoin
 
 import fire
@@ -144,7 +145,12 @@ class ChangemanZmf:
                     pkg_id = pkg["package"]
         return pkg_id
 
-    def create_package(self, config_file="-", app=None, title=None):
+    def create_package(
+        self,
+        config_file: str = "-",
+        app: Optional[str] = None,
+        title: Optional[str] = None,
+    ) -> Optional[str]:
         data = {
             "applName": app,
             "packageTitle": title,
@@ -196,11 +202,11 @@ class ZmfRestNok(Exception):
     pass
 
 
-def extension(file):
+def extension(file: str) -> str:
     return Path(file).suffix.lstrip(".")
 
 
-def jobcard(user, action="@"):
+def jobcard(user: str, action: str = "@") -> Dict[str, str]:
     return {
         "jobCard01": "//" + user + action[:1].upper() + " JOB 0,'CHANGEMAN',",
         "jobCard02": "//         CLASS=A,MSGCLASS=A,",
@@ -209,7 +215,7 @@ def jobcard(user, action="@"):
     }
 
 
-def read_yaml(file):
+def read_yaml(file: str) -> dict:
     if file in ["-", "/dev/stdin"]:
         fh = sys.stdin
     else:
