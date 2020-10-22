@@ -156,9 +156,11 @@ class ChangemanZmf:
 
     def get_package(self, config_file="-", app=None, title=None):
         config = read_yaml(config_file)
-        search_app = config.get("applName", app)
-        search_title = config.get("packageTitle", title)
-        pkg_id = self.search_package(search_app, search_title)
+        pkg_id = config.get("package")
+        if not pkg_id:
+            search_app = config.get("applName", app)
+            search_title = config.get("packageTitle", title)
+            pkg_id = self.search_package(search_app, search_title)
         if not pkg_id:
             pkg_id = self.create_package(config_file, app, title)
         return pkg_id
