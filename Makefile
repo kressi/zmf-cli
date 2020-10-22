@@ -6,21 +6,24 @@ SHELL := /bin/bash
 
 .SILENT:
 
-all: lint test build install
+all: clean lint build install test
 
 init:
 	python -m pip install .[tests]
 	python -m pip install build
 
+clean:
+	rm -rf dist build
+
 lint:
 	black .
 	flake8
-
-test:
-	pytest --cov=zmfcli
 
 build:
 	python -m build .
 
 install: build
 	python -m pip install dist/*
+
+test:
+	pytest --cov=zmfcli
