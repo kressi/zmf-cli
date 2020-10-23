@@ -97,7 +97,7 @@ class ChangemanZmf:
         for comp in source_comps:
             dt = data.copy()
             dt.update(allconfigs.get(removeprefix(comp, SRC_DIR)))
-            dt["componentType"] = extension(comp)
+            dt["componentType"] = extension(comp).upper()
             dt["component"] = Path(comp).stem
             resp = self.__session.put("component/build", data=dt)
             self.logger.info(resp)
