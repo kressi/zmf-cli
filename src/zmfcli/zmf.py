@@ -33,27 +33,7 @@ ZMF_STATUS_INFO = "04"
 ZMF_STATUS_FAILURE = "08"
 
 Payload = Dict[str, Union[str, List[str]]]
-
-"""
-Sample ZmfResponse
-
-{
-    "returnCode": "00",
-    "message": "CMN8600I - The Package search list is complete.",
-    "reasonCode": "8600",
-    "result": [
-        {
-            "package": "APP 000000",
-            "tempChangeDuration": 0
-        },
-        {
-            "package": "APP 000001",
-            "tempChangeDuration": 0
-        }
-    ]
-}
-"""
-ZmfResult = List[Dict[str, str]]
+ZmfResult = List[Dict[str, Union[str, int]]]
 ZmfResponse = Dict[str, Union[str, ZmfResult]]
 
 
