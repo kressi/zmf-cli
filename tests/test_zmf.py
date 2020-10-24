@@ -1,6 +1,5 @@
 # https://www.nerdwallet.com/blog/engineering/5-pytest-best-practices/
 # https://docs.pytest.org/en/stable/capture.html
-# https://docs.pytest.org/en/stable/fixture.html
 
 import io
 
@@ -14,6 +13,7 @@ from zmfcli.zmf import (
     read_yaml,
     removeprefix,
     ChangemanZmf,
+    ZmfRestNok,
 )
 
 
@@ -138,28 +138,78 @@ def test_checkin(zmfapi):
 
 @responses.activate
 def test_build(zmfapi):
-    data = {
+    data_ok = {
         "returnCode": "00",
-        "message": "CMNXXXXI - ...",
-        "reasonCode": "XXXX",
+        "message": "CMN8700I - Component Build service completed",
+        "reasonCode": "8700",
     }
     responses.add(
         responses.PUT,
         "https://example.com:8080/zmfrest/component/build",
-        json=data,
+        json=data_ok,
         headers={"content-type": "application/json"},
         status=200,
     )
     assert zmfapi.build("APP 000000", COMPONENTS) is None
     assert zmfapi.build("APP 000000", COMPONENTS, db2Precompile=True) is None
+    data_no_info = {  # lowercase componentType
+        "returnCode": "08",
+        "message": "CMN6504I - No information found for this request.",
+        "reasonCode": "6504",
+    }
+    responses.reset()
+    responses.add(
+        responses.PUT,
+        "https://example.com:8080/zmfrest/component/build",
+        json=data_no_info,
+        headers={"content-type": "application/json"},
+        status=200,
+    )
+    with pytest.raises(ZmfRestNok) as excinfo:
+        zmfapi.build("APP 000000", COMPONENTS)
+    assert "CMN6504I" in str(excinfo.value)
+    data_no_comp = {
+        "returnCode": "08",
+        "message": "CMN8464I - exist.sre is not a component within the package",  # noqa: E501
+        "reasonCode": "8464",
+    }
+    responses.reset()
+    responses.add(
+        responses.PUT,
+        "https://example.com:8080/zmfrest/component/build",
+        json=data_no_comp,
+        headers={"content-type": "application/json"},
+        status=200,
+    )
+    with pytest.raises(ZmfRestNok) as excinfo:
+        zmfapi.build("APP 000000", ["file/does/not/exist.sre"])
+    assert "CMN8464I" in str(excinfo.value)
+
+
+response_create = {
+    "returnCode": "00",
+    "message": "CMN2100I - APP 000001 change package has been created.",
+    "reasonCode": "2100",
+    "result": [
+        {
+            "package": "APP 000001",
+            "packageLevel": "1",
+            "installDate": "20211231",
+            "applName": "APP",
+            "packageId": 11,
+            "packageType": "1",
+            "packageStatus": "6",
+        }
+    ],
+}
 
 
 @responses.activate
 def test_build_config(zmfapi, tmp_path):
     data = {
         "returnCode": "00",
-        "message": "CMNXXXXI - ...",
-        "reasonCode": "XXXX",
+        "message": "CMN8700I - Component Build service completed",
+        "reasonCode": "8700",
     }
     responses.add(
         responses.PUT,
@@ -208,3 +258,27 @@ def test_audit(zmfapi):
         status=200,
     )
     assert zmfapi.audit("APP 000000") is None
+
+
+@responses.activate
+def test_search_package(zmfapi):
+    data = {
+        "returnCode": "00",
+        "message": "CMN8600I - The Package search list is complete.",
+        "reasonCode": "8600",
+        "result": [
+            {
+                "package": "APP 000008",
+                "packageId": 8,
+                "packageTitle": "fancy package title",
+            }
+        ],
+    }
+    responses.add(
+        responses.GET,
+        "https://example.com:8080/zmfrest/package/search",
+        json=data,
+        headers={"content-type": "application/json"},
+        status=200,
+    )
+    assert zmfapi.search_package("APP", "fancy package title") == "APP 000008"
