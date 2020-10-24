@@ -182,6 +182,7 @@ class ChangemanZmf:
                 # search matches title as substring, ensure full title matches
                 if pkg.get("packageTitle") == title:
                     pkg_id = pkg.get("package")
+                    break
         return pkg_id
 
     def create_package(

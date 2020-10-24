@@ -1,5 +1,3 @@
-import io
-
 import pytest
 import responses
 import yaml
@@ -17,6 +15,60 @@ COMPONENTS = [
     "src/SRE/APPE0002.sre",
 ]
 
+ZMF_RESP_XXXX_OK = {
+    "returnCode": "00",
+    "message": "CMNXXXXI - ...",
+    "reasonCode": "XXXX",
+}
+
+ZMF_RESP_XXXX_INFO = {
+    "returnCode": "04",
+    "message": "CMNXXXXI - ...",
+    "reasonCode": "XXXX",
+}
+
+ZMF_RESP_BUILD_OK = {
+    "returnCode": "00",
+    "message": "CMN8700I - Component Build service completed",
+    "reasonCode": "8700",
+}
+
+ZMF_RESP_CREATE_000009 = {
+    "returnCode": "00",
+    "message": "CMN2100I - APP 000008 change package has been created.",
+    "reasonCode": "2100",
+    "result": [
+        {
+            "package": "APP 000009",
+            "packageId": 9,
+            "packageTitle": "fancy package title",
+        }
+    ],
+}
+
+ZMF_RESP_SEARCH_000007 = {
+    "returnCode": "00",
+    "message": "CMN8600I - The Package search list is complete.",
+    "reasonCode": "8600",
+    "result": [
+        {
+            "package": "APP 000006",
+            "packageId": 6,
+            "packageTitle": "fancy package title",
+        },
+        {
+            "package": "APP 000007",
+            "packageId": 7,
+            "packageTitle": "fancy package title",
+        },
+        {
+            "package": "APP 000008",
+            "packageId": 8,
+            "packageTitle": "unexpected package title",
+        },
+    ],
+}
+
 
 @pytest.fixture
 def zmfapi():
@@ -29,15 +81,10 @@ def zmfapi():
 
 @responses.activate
 def test_checkin(zmfapi):
-    data = {
-        "returnCode": "00",
-        "message": "CMNXXXXI - ...",
-        "reasonCode": "XXXX",
-    }
     responses.add(
         responses.PUT,
         "https://example.com:8080/zmfrest/component/checkin",
-        json=data,
+        json=ZMF_RESP_XXXX_OK,
         headers={"content-type": "application/json"},
         status=200,
     )
@@ -47,15 +94,10 @@ def test_checkin(zmfapi):
 
 @responses.activate
 def test_build(zmfapi):
-    data_ok = {
-        "returnCode": "00",
-        "message": "CMN8700I - Component Build service completed",
-        "reasonCode": "8700",
-    }
     responses.add(
         responses.PUT,
         "https://example.com:8080/zmfrest/component/build",
-        json=data_ok,
+        json=ZMF_RESP_BUILD_OK,
         headers={"content-type": "application/json"},
         status=200,
     )
@@ -95,35 +137,12 @@ def test_build(zmfapi):
     assert "CMN8464I" in str(excinfo.value)
 
 
-response_create = {
-    "returnCode": "00",
-    "message": "CMN2100I - APP 000001 change package has been created.",
-    "reasonCode": "2100",
-    "result": [
-        {
-            "package": "APP 000001",
-            "packageLevel": "1",
-            "installDate": "20211231",
-            "applName": "APP",
-            "packageId": 11,
-            "packageType": "1",
-            "packageStatus": "6",
-        }
-    ],
-}
-
-
 @responses.activate
 def test_build_config(zmfapi, tmp_path):
-    data = {
-        "returnCode": "00",
-        "message": "CMN8700I - Component Build service completed",
-        "reasonCode": "8700",
-    }
     responses.add(
         responses.PUT,
         "https://example.com:8080/zmfrest/component/build",
-        json=data,
+        json=ZMF_RESP_BUILD_OK,
         headers={"content-type": "application/json"},
         status=200,
     )
@@ -182,22 +201,10 @@ def test_audit(zmfapi):
 
 @responses.activate
 def test_search_package(zmfapi):
-    data = {
-        "returnCode": "00",
-        "message": "CMN8600I - The Package search list is complete.",
-        "reasonCode": "8600",
-        "result": [
-            {
-                "package": "APP 000008",
-                "packageId": 8,
-                "packageTitle": "fancy package title",
-            }
-        ],
-    }
     responses.add(
         responses.GET,
         "https://example.com:8080/zmfrest/package/search",
-        json=data,
+        json=ZMF_RESP_SEARCH_000007,
         headers={"content-type": "application/json"},
         status=200,
         match=[
@@ -206,33 +213,29 @@ def test_search_package(zmfapi):
             ),
         ],
     )
-    assert zmfapi.search_package("APP", "fancy package title") == "APP 000008"
+    assert zmfapi.search_package("APP", "fancy package title") == "APP 000007"
+
+
+PKG_CONF_YAML_INCL_ID = {
+    "applName": "APP",
+    "packageTitle": "fancy package title",
+    "package": "APP 000001",
+}
+
+PKG_CONF_YAML_EXCL_ID = {
+    "applName": "APP",
+    "packageTitle": "fancy package title",
+}
 
 
 @responses.activate
-def test_create_package(zmfapi, monkeypatch):
-    yaml_data = {
-        "applName": "APP",
-        "packageTitle": "fancy package title",
-        "package": "APP 000001",
-    }
-    monkeypatch.setattr("sys.stdin", io.StringIO(yaml.dump(yaml_data)))
-    data = {
-        "returnCode": "00",
-        "message": "CMNXXXXI - ...",
-        "reasonCode": "XXXX",
-        "result": [
-            {
-                "package": "APP 000008",
-                "packageId": 8,
-                "packageTitle": "fancy package title",
-            }
-        ],
-    }
+def test_create_package(zmfapi, tmp_path):
+    config_file = tmp_path / "test.yml"
+    config_file.write_text(yaml.dump(PKG_CONF_YAML_INCL_ID))
     responses.add(
         responses.POST,
         "https://example.com:8080/zmfrest/package",
-        json=data,
+        json=ZMF_RESP_CREATE_000009,
         headers={"content-type": "application/json"},
         status=200,
         match=[
@@ -245,15 +248,52 @@ def test_create_package(zmfapi, monkeypatch):
             ),
         ],
     )
-    assert zmfapi.create_package("-") == "APP 000008"
+    assert zmfapi.create_package(config_file) == "APP 000009"
 
 
 @responses.activate
-def test_get_package(zmfapi, monkeypatch):
-    yaml_data = {
-        "applName": "APP",
-        "packageTitle": "fancy package title",
-        "package": "APP 000001",
-    }
-    monkeypatch.setattr("sys.stdin", io.StringIO(yaml.dump(yaml_data)))
-    assert zmfapi.get_package("-") == "APP 000001"
+def test_get_package(zmfapi, tmp_path):
+    config_incl_id_file = tmp_path / "test.yml"
+    config_incl_id_file.write_text(yaml.dump(PKG_CONF_YAML_INCL_ID))
+    assert zmfapi.get_package(config_incl_id_file) == "APP 000001"
+
+    config_excl_id_file = tmp_path / "test.yml"
+    config_excl_id_file.write_text(yaml.dump(PKG_CONF_YAML_EXCL_ID))
+    responses.add(
+        responses.GET,
+        "https://example.com:8080/zmfrest/package/search",
+        json=ZMF_RESP_SEARCH_000007,
+        headers={"content-type": "application/json"},
+        status=200,
+        match=[
+            responses.urlencoded_params_matcher(
+                {"package": "APP*", "packageTitle": "fancy package title"}
+            ),
+        ],
+    )
+    assert zmfapi.get_package(config_excl_id_file) == "APP 000007"
+
+    responses.reset()
+    responses.add(
+        responses.GET,
+        "https://example.com:8080/zmfrest/package/search",
+        json=ZMF_RESP_XXXX_INFO,
+        headers={"content-type": "application/json"},
+        status=200,
+        match=[
+            responses.urlencoded_params_matcher(
+                {"package": "APP*", "packageTitle": "fancy package title"}
+            ),
+        ],
+    )
+    responses.add(
+        responses.POST,
+        "https://example.com:8080/zmfrest/package",
+        json=ZMF_RESP_CREATE_000009,
+        headers={"content-type": "application/json"},
+        status=200,
+        match=[
+            responses.urlencoded_params_matcher(PKG_CONF_YAML_EXCL_ID),
+        ],
+    )
+    assert zmfapi.get_package(config_excl_id_file) == "APP 000009"
