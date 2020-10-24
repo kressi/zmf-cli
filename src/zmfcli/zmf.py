@@ -9,6 +9,7 @@ from urllib.parse import urljoin
 
 import fire  # type: ignore
 import requests
+import toml
 import yaml
 
 from .logrequests import debug_requests_on
@@ -299,7 +300,10 @@ def read_yaml(file: str) -> dict:
         fh = sys.stdin
     else:
         fh = open(file)
-    data = yaml.safe_load(fh)
+    if file.endswith(".toml"):
+        data = toml.load(fh)
+    else:
+        data = yaml.safe_load(fh)
     if file != "-":
         fh.close()
     return data

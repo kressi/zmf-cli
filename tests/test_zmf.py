@@ -168,7 +168,7 @@ def test_build_config(zmfapi, tmp_path):
         },
     }
     file.write_text(yaml.dump(build_config))
-    assert zmfapi.build("APP 000000", COMPONENTS, file) is None
+    assert zmfapi.build("APP 000000", COMPONENTS, str(file)) is None
 
 
 @responses.activate
@@ -248,14 +248,14 @@ def test_create_package(zmfapi, tmp_path):
             ),
         ],
     )
-    assert zmfapi.create_package(config_file) == "APP 000009"
+    assert zmfapi.create_package(str(config_file)) == "APP 000009"
 
 
 @responses.activate
 def test_get_package(zmfapi, tmp_path):
     config_incl_id_file = tmp_path / "test.yml"
     config_incl_id_file.write_text(yaml.dump(PKG_CONF_YAML_INCL_ID))
-    assert zmfapi.get_package(config_incl_id_file) == "APP 000001"
+    assert zmfapi.get_package(str(config_incl_id_file)) == "APP 000001"
 
     config_excl_id_file = tmp_path / "test.yml"
     config_excl_id_file.write_text(yaml.dump(PKG_CONF_YAML_EXCL_ID))
@@ -271,7 +271,7 @@ def test_get_package(zmfapi, tmp_path):
             ),
         ],
     )
-    assert zmfapi.get_package(config_excl_id_file) == "APP 000007"
+    assert zmfapi.get_package(str(config_excl_id_file)) == "APP 000007"
 
     responses.reset()
     responses.add(
@@ -296,4 +296,4 @@ def test_get_package(zmfapi, tmp_path):
             responses.urlencoded_params_matcher(PKG_CONF_YAML_EXCL_ID),
         ],
     )
-    assert zmfapi.get_package(config_excl_id_file) == "APP 000009"
+    assert zmfapi.get_package(str(config_excl_id_file)) == "APP 000009"

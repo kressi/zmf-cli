@@ -4,6 +4,7 @@
 import io
 
 import pytest
+import toml
 import yaml
 
 from zmfcli.zmf import extension, int_or_zero, jobcard, read_yaml, removeprefix
@@ -79,12 +80,16 @@ def test_removeprefix(string, prefix, expected):
 
 
 yaml_data = {"A": [1, 2.0, False], "B": {"1": True, "2": None}}
+toml_data = {"A": [1, 2], "B": {"1": True, "2": "string"}}
 
 
 def test_read_yaml_file(tmp_path):
-    file = tmp_path / "test.yml"
-    file.write_text(yaml.dump(yaml_data))
-    assert read_yaml(file) == yaml_data
+    file_yml = tmp_path / "test.yml"
+    file_yml.write_text(yaml.dump(yaml_data))
+    assert read_yaml(str(file_yml)) == yaml_data
+    file_toml = tmp_path / "test.toml"
+    file_toml.write_text(toml.dumps(toml_data))
+    assert read_yaml(str(file_toml)) == toml_data
 
 
 def test_read_yaml_stdin(monkeypatch):
