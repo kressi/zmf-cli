@@ -1,103 +1,11 @@
-# https://www.nerdwallet.com/blog/engineering/5-pytest-best-practices/
-# https://docs.pytest.org/en/stable/capture.html
-
 import io
 
 import pytest
 import responses
 import yaml
 
-from zmfcli.zmf import (
-    extension,
-    jobcard,
-    read_yaml,
-    removeprefix,
-    ChangemanZmf,
-    ZmfRestNok,
-)
-
-
-@pytest.mark.parametrize(
-    "path, expected",
-    [
-        ("file/with/path/and.ext", "ext"),
-        ("file/with/path/and", ""),
-        ("file/with/path.ext/and", ""),
-        ("file.ext", "ext"),
-        (".ext", ""),
-        (".", ""),
-        ("", ""),
-    ],
-)
-def test_extension(path, expected):
-    assert extension(path) == expected
-
-
-@pytest.mark.parametrize(
-    "user, action, expected",
-    [
-        (
-            "",
-            "",
-            {
-                "jobCard01": "// JOB 0,'CHANGEMAN',",
-                "jobCard02": "//         CLASS=A,MSGCLASS=A,",
-                "jobCard03": "//         NOTIFY=&SYSUID",
-                "jobCard04": "//*",
-            },
-        ),
-        (
-            "U000000",
-            "audit",
-            {
-                "jobCard01": "//U000000A JOB 0,'CHANGEMAN',",
-                "jobCard02": "//         CLASS=A,MSGCLASS=A,",
-                "jobCard03": "//         NOTIFY=&SYSUID",
-                "jobCard04": "//*",
-            },
-        ),
-        (
-            "U000000",
-            "AUDIT",
-            {
-                "jobCard01": "//U000000A JOB 0,'CHANGEMAN',",
-                "jobCard02": "//         CLASS=A,MSGCLASS=A,",
-                "jobCard03": "//         NOTIFY=&SYSUID",
-                "jobCard04": "//*",
-            },
-        ),
-    ],
-)
-def test_jobcard(user, action, expected):
-    assert jobcard(user, action) == expected
-
-
-@pytest.mark.parametrize(
-    "string, prefix, expected",
-    [
-        ("", "pre", ""),
-        ("pre", "pre", ""),
-        ("prefix", "pre", "fix"),
-        ("prefix", "", "prefix"),
-        ("prefix", "fix", "prefix"),
-    ],
-)
-def test_removeprefix(string, prefix, expected):
-    assert removeprefix(string, prefix) == expected
-
-
-yaml_data = {"A": [1, 2.0, False], "B": {"1": True, "2": None}}
-
-
-def test_read_yaml_file(tmp_path):
-    file = tmp_path / "test.yml"
-    file.write_text(yaml.dump(yaml_data))
-    assert read_yaml(file) == yaml_data
-
-
-def test_read_yaml_stdin(monkeypatch):
-    monkeypatch.setattr("sys.stdin", io.StringIO(yaml.dump(yaml_data)))
-    assert read_yaml("-") == yaml_data
+from zmfcli.zmf import ChangemanZmf, ZmfRestNok
+from zmfcli.logrequests import debug_requests_on
 
 
 ZMF_REST_URL = "https://example.com:8080/zmfrest"
@@ -133,6 +41,7 @@ def test_checkin(zmfapi):
         headers={"content-type": "application/json"},
         status=200,
     )
+    debug_requests_on()
     assert zmfapi.checkin("APP 000000", "U000000.LIB", COMPONENTS) is None
 
 
@@ -256,6 +165,17 @@ def test_audit(zmfapi):
         json=data,
         headers={"content-type": "application/json"},
         status=200,
+        match=[
+            responses.urlencoded_params_matcher(
+                {
+                    "package": "APP 000000",
+                    "jobCard01": "//U000000A JOB 0,'CHANGEMAN',",
+                    "jobCard02": "//         CLASS=A,MSGCLASS=A,",
+                    "jobCard03": "//         NOTIFY=&SYSUID",
+                    "jobCard04": "//*",
+                }
+            ),
+        ],
     )
     assert zmfapi.audit("APP 000000") is None
 
@@ -280,5 +200,49 @@ def test_search_package(zmfapi):
         json=data,
         headers={"content-type": "application/json"},
         status=200,
+        match=[
+            responses.urlencoded_params_matcher(
+                {"package": "APP*", "packageTitle": "fancy package title"}
+            ),
+        ],
     )
     assert zmfapi.search_package("APP", "fancy package title") == "APP 000008"
+
+
+@responses.activate
+def test_create_package(zmfapi, monkeypatch):
+    yaml_data = {
+        "applName": "APP",
+        "packageTitle": "fancy package title",
+        "package": "APP 000001",
+    }
+    monkeypatch.setattr("sys.stdin", io.StringIO(yaml.dump(yaml_data)))
+    data = {
+        "returnCode": "00",
+        "message": "CMNXXXXI - ...",
+        "reasonCode": "XXXX",
+        "result": [
+            {
+                "package": "APP 000008",
+                "packageId": 8,
+                "packageTitle": "fancy package title",
+            }
+        ],
+    }
+    responses.add(
+        responses.POST,
+        "https://example.com:8080/zmfrest/package",
+        json=data,
+        headers={"content-type": "application/json"},
+        status=200,
+        match=[
+            responses.urlencoded_params_matcher(
+                {
+                    "applName": "APP",
+                    "packageTitle": "fancy package title",
+                    "package": "APP 000001",
+                }
+            ),
+        ],
+    )
+    assert zmfapi.create_package("-") == "APP 000008"
