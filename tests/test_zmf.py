@@ -246,3 +246,14 @@ def test_create_package(zmfapi, monkeypatch):
         ],
     )
     assert zmfapi.create_package("-") == "APP 000008"
+
+
+@responses.activate
+def test_get_package(zmfapi, monkeypatch):
+    yaml_data = {
+        "applName": "APP",
+        "packageTitle": "fancy package title",
+        "package": "APP 000001",
+    }
+    monkeypatch.setattr("sys.stdin", io.StringIO(yaml.dump(yaml_data)))
+    assert zmfapi.get_package("-") == "APP 000001"
