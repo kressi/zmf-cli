@@ -4,7 +4,16 @@ import sys
 
 from itertools import groupby
 from pathlib import Path
-from typing import Callable, Dict, Iterable, List, Optional, Union
+from typing import (
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    MutableMapping,
+    Optional,
+    TypedDict,
+    Union,
+)
 from urllib.parse import urljoin
 
 import fire  # type: ignore
@@ -34,7 +43,16 @@ ZMF_STATUS_FAILURE = "08"
 
 Payload = Dict[str, Union[str, List[str]]]
 ZmfResult = List[Dict[str, Union[str, int]]]
-ZmfResponse = Dict[str, Union[str, ZmfResult]]
+
+
+class ZmfResponse(TypedDict):
+    returnCode: str
+    message: str
+    reasonCode: str
+
+
+class ZmfResultResponse(ZmfResponse):
+    result: ZmfResult
 
 
 class ChangemanZmf:
@@ -152,7 +170,7 @@ class ChangemanZmf:
             "packageTitle": title,
         }
         result = self.__session.result_get("package/search", data=data)
-        pkg_id = None
+        pkg = None
         # in case multiple packages have been found take the youngest
         if result:
             for pkg in sorted(
@@ -162,9 +180,9 @@ class ChangemanZmf:
             ):
                 # search matches title as substring, ensure full title matches
                 if pkg.get("packageTitle") == title:
-                    pkg_id = pkg.get("package")
+                    pkg = pkg.get("package")
                     break
-        return pkg_id
+        return pkg
 
     def create_package(
         self,
@@ -189,14 +207,14 @@ class ChangemanZmf:
         title: Optional[str] = None,
     ) -> Optional[str]:
         config = read_yaml(config_file)
-        pkg_id = config.get("package")
-        if not pkg_id:
+        pkg = config.get("package")
+        if not pkg:
             search_app = config.get("applName", app)
             search_title = config.get("packageTitle", title)
-            pkg_id = self.search_package(search_app, search_title)
-        if not pkg_id:
-            pkg_id = self.create_package(config_file, app, title)
-        return pkg_id
+            pkg = self.search_package(search_app, search_title)
+        if not pkg:
+            pkg = self.create_package(config_file, app, title)
+        return pkg
 
 
 # https://stackoverflow.com/a/51026159
@@ -275,7 +293,7 @@ def jobcard(user: str, action: str = "@") -> Dict[str, str]:
     }
 
 
-def read_yaml(file: str) -> dict:
+def read_yaml(file: str) -> MutableMapping:
     if file == "-":
         fh = sys.stdin
     else:
