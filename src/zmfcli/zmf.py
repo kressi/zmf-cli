@@ -162,11 +162,15 @@ class ChangemanZmf:
     def revert(self, package: str) -> None:
         print("revert")
 
-    def search_package(self, app: str, title: str) -> Optional[str]:
+    def search_package(
+        self, app: str, title: str, workChangeRequest: Optional[str] = None
+    ) -> Optional[str]:
         data = {
             "package": app + "*",
             "packageTitle": title,
         }
+        if workChangeRequest:
+            data["workChangeRequest"] = workChangeRequest
         result = self.__session.result_get("package/search", data=data)
         pkg_id = None
         # in case multiple packages have been found take the youngest
@@ -203,13 +207,17 @@ class ChangemanZmf:
         config_file: str = "-",
         app: Optional[str] = None,
         title: Optional[str] = None,
+        workChangeRequest: Optional[str] = None,
     ) -> Optional[str]:
         config = read_yaml(config_file)
         pkg_id = config.get("package")
         if not pkg_id:
             search_app = config.get("applName", app)
             search_title = config.get("packageTitle", title)
-            pkg_id = self.search_package(search_app, search_title)
+            search_request = config.get("workChangeRequest", workChangeRequest)
+            pkg_id = self.search_package(
+                search_app, search_title, search_request
+            )
         if not pkg_id:
             pkg_id = self.create_package(config_file, app, title)
         return pkg_id
