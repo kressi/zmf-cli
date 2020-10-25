@@ -18,7 +18,7 @@ clean:
 lint:
 	black .
 	flake8
-	mypy --strict src || :
+	mypy src
 
 build:
 	python -m build .

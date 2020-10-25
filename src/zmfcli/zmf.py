@@ -5,6 +5,7 @@ import sys
 from itertools import groupby
 from pathlib import Path
 from typing import (
+    Any,
     Callable,
     Dict,
     Iterable,
@@ -45,13 +46,10 @@ Payload = Dict[str, Union[str, List[str]]]
 ZmfResult = List[Dict[str, Union[str, int]]]
 
 
-class ZmfResponse(TypedDict):
+class ZmfResponse(TypedDict, total=False):
     returnCode: str
     message: str
     reasonCode: str
-
-
-class ZmfResultResponse(ZmfResponse):
     result: ZmfResult
 
 
@@ -219,7 +217,9 @@ class ChangemanZmf:
 
 # https://stackoverflow.com/a/51026159
 class LoggedSession(requests.Session):
-    def __init__(self, prefix_url: str = "", *args, **kwargs) -> None:
+    def __init__(
+        self, prefix_url: str = "", *args: Any, **kwargs: Any
+    ) -> None:
         # Ignore type issue, https://github.com/python/mypy/issues/5887
         # super().__init__(....) in mixins fails with `Too many arguments...`
         super().__init__(*args, **kwargs)  # type: ignore
@@ -227,7 +227,7 @@ class LoggedSession(requests.Session):
         self.logger = logging.getLogger(__name__)
 
     def request(
-        self, method: str, url: Union[str, bytes], *args, **kwargs
+        self, method: str, url: Union[str, bytes], *args: Any, **kwargs: Any
     ) -> requests.Response:
         if isinstance(url, bytes):
             url = url.decode("utf-8")
@@ -240,11 +240,13 @@ class LoggedSession(requests.Session):
 def unpack_result(
     req: Callable[..., requests.Response]
 ) -> Callable[..., Optional[ZmfResult]]:
-    def wrapper(self, *args, **kwargs) -> Optional[ZmfResult]:
+    def wrapper(
+        self: LoggedSession, *args: Any, **kwargs: Any
+    ) -> Optional[ZmfResult]:
         resp = req(self, *args, **kwargs)
         if not resp.ok:
             raise RequestNok(resp.status_code)
-        payload = resp.json()
+        payload: ZmfResponse = resp.json()
         self.logger.info(
             {
                 k: payload.get(k)
@@ -260,15 +262,15 @@ def unpack_result(
 
 class ZmfSession(LoggedSession):
     @unpack_result
-    def result_get(self, *args, **kwargs):
+    def result_get(self, *args: Any, **kwargs: Any) -> requests.Response:
         return super().get(*args, **kwargs)
 
     @unpack_result
-    def result_post(self, *args, **kwargs):
+    def result_post(self, *args: Any, **kwargs: Any) -> requests.Response:
         return super().post(*args, **kwargs)
 
     @unpack_result
-    def result_put(self, *args, **kwargs):
+    def result_put(self, *args: Any, **kwargs: Any) -> requests.Response:
         return super().put(*args, **kwargs)
 
 
@@ -293,7 +295,7 @@ def jobcard(user: str, action: str = "@") -> Dict[str, str]:
     }
 
 
-def read_yaml(file: str) -> MutableMapping:
+def read_yaml(file: str) -> MutableMapping[str, Any]:
     if file == "-":
         fh = sys.stdin
     else:
@@ -324,12 +326,10 @@ def int_or_zero(a: Union[int, str, None]) -> int:
 
 
 def str_or_none(a: Union[int, str, None]) -> Optional[str]:
-    if isinstance(a, int):
-        return str(a)
-    elif isinstance(a, str):
-        return a
-    else:
+    if a is None:
         return None
+    else:
+        return str(a)
 
 
 def main() -> None:
