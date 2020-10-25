@@ -119,10 +119,10 @@ class ChangemanZmf:
             self.__session.result_put("component/build", data=dt)
 
     def build_config(
-        self, package: str, components: Iterable[str], config_file: str = "-"
+        self, package: str, components: Iterable[str], config_file: str
     ) -> None:
         """build source like components"""
-        allconfigs = read_yaml(config_file)
+        allconfigs = read_config(config_file)
         data = {
             "package": package,
             "buildProc": "CMNCOB2",
@@ -188,7 +188,7 @@ class ChangemanZmf:
 
     def create_package(
         self,
-        config_file: str = "-",
+        config_file: Union[str, "os.PathLike[str]"] = "-",
         app: Optional[str] = None,
         title: Optional[str] = None,
     ) -> Optional[str]:
@@ -196,7 +196,7 @@ class ChangemanZmf:
             "applName": app,
             "packageTitle": title,
         }
-        config = read_yaml(config_file)
+        config = read_config(config_file)
         data.update(config)
         result = self.__session.result_post("package", data=data)
         self.logger.info(result)
@@ -204,12 +204,12 @@ class ChangemanZmf:
 
     def get_package(
         self,
-        config_file: str = "-",
+        config_file: Union[str, "os.PathLike[str]"] = "-",
         app: Optional[str] = None,
         title: Optional[str] = None,
         workChangeRequest: Optional[str] = None,
     ) -> Optional[str]:
-        config = read_yaml(config_file)
+        config = read_config(config_file)
         pkg_id = config.get("package")
         if not pkg_id:
             search_app = config.get("applName", app)
@@ -303,8 +303,10 @@ def jobcard(user: str, action: str = "@") -> Dict[str, str]:
     }
 
 
-def read_yaml(file: str) -> MutableMapping[str, Any]:
-    if file == "-":
+def read_config(
+    file: Union[str, "os.PathLike[str]"]
+) -> MutableMapping[str, Any]:
+    if isinstance(file, str) and file == "-":
         fh = sys.stdin
     else:
         fh = open(file)
@@ -312,7 +314,7 @@ def read_yaml(file: str) -> MutableMapping[str, Any]:
         data = toml.load(fh)
     else:
         data = yaml.safe_load(fh)
-    if file != "-":
+    if fh != sys.stdin:
         fh.close()
     return data
 

@@ -1,8 +1,9 @@
 import pytest
+import requests
 import responses
 import yaml
 
-from zmfcli.zmf import ChangemanZmf, ZmfRestNok
+from zmfcli.zmf import ChangemanZmf, RequestNok, ZmfRestNok
 
 
 ZMF_REST_URL = "https://example.com:8080/zmfrest"
@@ -85,9 +86,19 @@ def test_checkin(zmfapi):
         "https://example.com:8080/zmfrest/component/checkin",
         json=ZMF_RESP_XXXX_OK,
         headers={"content-type": "application/json"},
-        status=200,
+        status=requests.codes.ok,
     )
     assert zmfapi.checkin("APP 000000", "U000000.LIB", COMPONENTS) is None
+    responses.reset()
+    responses.add(
+        responses.PUT,
+        "https://example.com:8080/zmfrest/component/checkin",
+        headers={"content-type": "application/json"},
+        status=requests.codes.bad_request,
+    )
+    with pytest.raises(RequestNok) as excinfo:
+        zmfapi.checkin("APP 000000", "U000000.LIB", COMPONENTS)
+    assert str(requests.codes.bad_request) in str(excinfo.value)
 
 
 @responses.activate
@@ -97,7 +108,7 @@ def test_build(zmfapi):
         "https://example.com:8080/zmfrest/component/build",
         json=ZMF_RESP_BUILD_OK,
         headers={"content-type": "application/json"},
-        status=200,
+        status=requests.codes.ok,
     )
     assert zmfapi.build("APP 000000", COMPONENTS) is None
     assert zmfapi.build("APP 000000", COMPONENTS, db2Precompile=True) is None
@@ -112,7 +123,7 @@ def test_build(zmfapi):
         "https://example.com:8080/zmfrest/component/build",
         json=data_no_info,
         headers={"content-type": "application/json"},
-        status=200,
+        status=requests.codes.ok,
     )
     with pytest.raises(ZmfRestNok) as excinfo:
         zmfapi.build("APP 000000", COMPONENTS)
@@ -128,7 +139,7 @@ def test_build(zmfapi):
         "https://example.com:8080/zmfrest/component/build",
         json=data_no_comp,
         headers={"content-type": "application/json"},
-        status=200,
+        status=requests.codes.ok,
     )
     with pytest.raises(ZmfRestNok) as excinfo:
         zmfapi.build("APP 000000", ["file/does/not/exist.sre"])
@@ -142,7 +153,7 @@ def test_build_config(zmfapi, tmp_path):
         "https://example.com:8080/zmfrest/component/build",
         json=ZMF_RESP_BUILD_OK,
         headers={"content-type": "application/json"},
-        status=200,
+        status=requests.codes.ok,
     )
     file = tmp_path / "test.yml"
     build_config = {
@@ -166,7 +177,19 @@ def test_build_config(zmfapi, tmp_path):
         },
     }
     file.write_text(yaml.dump(build_config))
-    assert zmfapi.build("APP 000000", COMPONENTS, str(file)) is None
+    assert zmfapi.build_config("APP 000000", COMPONENTS, file) is None
+
+
+@responses.activate
+def test_scratch(zmfapi):
+    responses.add(
+        responses.PUT,
+        "https://example.com:8080/zmfrest/component/scratch",
+        json=ZMF_RESP_XXXX_OK,
+        headers={"content-type": "application/json"},
+        status=requests.codes.ok,
+    )
+    assert zmfapi.scratch("APP 000000", COMPONENTS) is None
 
 
 @responses.activate
@@ -181,7 +204,7 @@ def test_audit(zmfapi):
         "https://example.com:8080/zmfrest/package/audit",
         json=data,
         headers={"content-type": "application/json"},
-        status=200,
+        status=requests.codes.ok,
         match=[
             responses.urlencoded_params_matcher(
                 {
@@ -204,7 +227,7 @@ def test_search_package(zmfapi):
         "https://example.com:8080/zmfrest/package/search",
         json=ZMF_RESP_SEARCH_000007,
         headers={"content-type": "application/json"},
-        status=200,
+        status=requests.codes.ok,
         match=[
             responses.urlencoded_params_matcher(
                 {"package": "APP*", "packageTitle": "fancy package title"}
@@ -235,7 +258,7 @@ def test_create_package(zmfapi, tmp_path):
         "https://example.com:8080/zmfrest/package",
         json=ZMF_RESP_CREATE_000009,
         headers={"content-type": "application/json"},
-        status=200,
+        status=requests.codes.ok,
         match=[
             responses.urlencoded_params_matcher(
                 {
@@ -246,14 +269,14 @@ def test_create_package(zmfapi, tmp_path):
             ),
         ],
     )
-    assert zmfapi.create_package(str(config_file)) == "APP 000009"
+    assert zmfapi.create_package(config_file) == "APP 000009"
 
 
 @responses.activate
 def test_get_package(zmfapi, tmp_path):
     config_incl_id_file = tmp_path / "test.yml"
     config_incl_id_file.write_text(yaml.dump(PKG_CONF_YAML_INCL_ID))
-    assert zmfapi.get_package(str(config_incl_id_file)) == "APP 000001"
+    assert zmfapi.get_package(config_incl_id_file) == "APP 000001"
 
     config_excl_id_file = tmp_path / "test.yml"
     config_excl_id_file.write_text(yaml.dump(PKG_CONF_YAML_EXCL_ID))
@@ -262,14 +285,14 @@ def test_get_package(zmfapi, tmp_path):
         "https://example.com:8080/zmfrest/package/search",
         json=ZMF_RESP_SEARCH_000007,
         headers={"content-type": "application/json"},
-        status=200,
+        status=requests.codes.ok,
         match=[
             responses.urlencoded_params_matcher(
                 {"package": "APP*", "packageTitle": "fancy package title"}
             ),
         ],
     )
-    assert zmfapi.get_package(str(config_excl_id_file)) == "APP 000007"
+    assert zmfapi.get_package(config_excl_id_file) == "APP 000007"
 
     responses.reset()
     responses.add(
@@ -277,7 +300,7 @@ def test_get_package(zmfapi, tmp_path):
         "https://example.com:8080/zmfrest/package/search",
         json=ZMF_RESP_XXXX_INFO,
         headers={"content-type": "application/json"},
-        status=200,
+        status=requests.codes.ok,
         match=[
             responses.urlencoded_params_matcher(
                 {"package": "APP*", "packageTitle": "fancy package title"}
@@ -289,9 +312,9 @@ def test_get_package(zmfapi, tmp_path):
         "https://example.com:8080/zmfrest/package",
         json=ZMF_RESP_CREATE_000009,
         headers={"content-type": "application/json"},
-        status=200,
+        status=requests.codes.ok,
         match=[
             responses.urlencoded_params_matcher(PKG_CONF_YAML_EXCL_ID),
         ],
     )
-    assert zmfapi.get_package(str(config_excl_id_file)) == "APP 000009"
+    assert zmfapi.get_package(config_excl_id_file) == "APP 000009"

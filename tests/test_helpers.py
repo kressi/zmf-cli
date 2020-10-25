@@ -7,7 +7,14 @@ import pytest
 import toml
 import yaml
 
-from zmfcli.zmf import extension, int_or_zero, jobcard, read_yaml, removeprefix
+from zmfcli.zmf import (
+    extension,
+    int_or_zero,
+    jobcard,
+    read_config,
+    removeprefix,
+    str_or_none,
+)
 
 
 @pytest.mark.parametrize(
@@ -83,18 +90,18 @@ yaml_data = {"A": [1, 2.0, False], "B": {"1": True, "2": None}}
 toml_data = {"A": [1, 2], "B": {"1": True, "2": "string"}}
 
 
-def test_read_yaml_file(tmp_path):
+def test_read_config_file(tmp_path):
     file_yml = tmp_path / "test.yml"
     file_yml.write_text(yaml.dump(yaml_data))
-    assert read_yaml(str(file_yml)) == yaml_data
+    assert read_config(str(file_yml)) == yaml_data
     file_toml = tmp_path / "test.toml"
     file_toml.write_text(toml.dumps(toml_data))
-    assert read_yaml(str(file_toml)) == toml_data
+    assert read_config(file_toml) == toml_data
 
 
-def test_read_yaml_stdin(monkeypatch):
+def test_read_config_stdin(monkeypatch):
     monkeypatch.setattr("sys.stdin", io.StringIO(yaml.dump(yaml_data)))
-    assert read_yaml("-") == yaml_data
+    assert read_config("-") == yaml_data
 
 
 @pytest.mark.parametrize(
@@ -111,3 +118,11 @@ def test_read_yaml_stdin(monkeypatch):
 )
 def test_int_or_zero(x, expected):
     assert int_or_zero(x) == expected
+
+
+@pytest.mark.parametrize(
+    "x, expected",
+    [("1", "1"), (1, "1"), (-1, "-1"), (1.9, "1.9"), (None, None), ({}, "{}")],
+)
+def test_str_or_none(x, expected):
+    assert str_or_none(x) == expected
