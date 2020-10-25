@@ -3,7 +3,6 @@ import responses
 import yaml
 
 from zmfcli.zmf import ChangemanZmf, ZmfRestNok
-from zmfcli.logrequests import debug_requests_on
 
 
 ZMF_REST_URL = "https://example.com:8080/zmfrest"
@@ -88,7 +87,6 @@ def test_checkin(zmfapi):
         headers={"content-type": "application/json"},
         status=200,
     )
-    debug_requests_on()
     assert zmfapi.checkin("APP 000000", "U000000.LIB", COMPONENTS) is None
 
 
