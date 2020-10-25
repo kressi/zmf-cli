@@ -280,7 +280,7 @@ def read_yaml(file: str) -> dict:
         fh = sys.stdin
     else:
         fh = open(file)
-    if file.endswith(".toml"):
+    if Path(file).suffix == ".toml":
         data = toml.load(fh)
     else:
         data = yaml.safe_load(fh)
