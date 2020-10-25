@@ -12,11 +12,12 @@ jobs:
       install:
         - pip install --upgrade pip
         - pip install twine build
-      before-script:
+      before_script:
         - python -m build .
         - twine check dist/*
       script:
         - twine upload --skip-existing --repository testpypi dist/*
+      after_success: skip
 
     - <<: *stage_deploy
       stage: deploy prod
@@ -27,12 +28,12 @@ jobs:
 install:
   - pip install --upgrade pip
   - pip install .[tests]
-  - pip install coveralls
 
 script:
   - flake8
   - black --diff --check .
   - mypy src
-  - pytest --cov=zmfcli --cov-report=xml
-  - coveralls
+  - pytest --cov zmfcli --cov-report xml
+
+after_success:
   - bash <(curl -s https://codecov.io/bash)
