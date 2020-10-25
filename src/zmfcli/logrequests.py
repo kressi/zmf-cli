@@ -10,7 +10,7 @@ from typing import Iterator
 
 def debug_requests_on() -> None:
     """switch debugging of requests module on"""
-    HTTPConnection.debuglevel = 1
+    HTTPConnection.debuglevel = 1  # type: ignore
     logging.basicConfig()
     logging.getLogger().setLevel(logging.DEBUG)
     requests_log = logging.getLogger("requests.packages.urllib3")
@@ -19,7 +19,7 @@ def debug_requests_on() -> None:
 
 
 def debug_requests_off() -> None:
-    HTTPConnection.debuglevel = 0
+    HTTPConnection.debuglevel = 0  # type: ignore
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.WARNING)
     root_logger.handlers = []
