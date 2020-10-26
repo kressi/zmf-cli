@@ -146,20 +146,20 @@ def test_build_config(zmfapi, tmp_path):
     )
     file = tmp_path / "test.yml"
     build_config = {
-        "APPB0001.srb": {
+        "SRB/APPB0001.srb": {
             "language": "DELTACOB",
             "buildproc": "CMNCOB2",
         },
-        "APPB0002.srb": {
+        "SRB/APPB0002.srb": {
             "language": "DELTACOB",
             "buildproc": "CMNCOB2",
         },
-        "APPE0001.sre": {
+        "SRE/APPE0001.sre": {
             "language": "DELTACOB",
             "buildproc": "CMNCOB2",
             "useDb2PreCompileOption": "N",
         },
-        "APPE0002.sre": {
+        "SRE/APPE0002.sre": {
             "language": "DELTACOB",
             "buildproc": "CMNCOB2",
             "useDb2PreCompileOption": "N",
