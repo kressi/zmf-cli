@@ -6,7 +6,7 @@ import yaml
 from zmfcli.zmf import ChangemanZmf, RequestNok, ZmfRestNok
 
 
-ZMF_REST_URL = "https://example.com:8080/zmfrest"
+ZMF_REST_URL = "http://example.com:8080/zmfrest/"
 COMPONENTS = [
     "src/CPY/APPI0001.cpy",
     "src/SRB/APPB0001.srb",
@@ -75,7 +75,7 @@ def zmfapi():
     return ChangemanZmf(
         user="U000000",
         password="Pa$$w0rd",
-        url="https://example.com:8080/zmfrest/",
+        url=ZMF_REST_URL,
     )
 
 
@@ -83,7 +83,7 @@ def zmfapi():
 def test_checkin(zmfapi):
     responses.add(
         responses.PUT,
-        "https://example.com:8080/zmfrest/component/checkin",
+        ZMF_REST_URL + "component/checkin",
         json=ZMF_RESP_XXXX_OK,
         headers={"content-type": "application/json"},
         status=requests.codes.ok,
@@ -92,7 +92,7 @@ def test_checkin(zmfapi):
     responses.reset()
     responses.add(
         responses.PUT,
-        "https://example.com:8080/zmfrest/component/checkin",
+        ZMF_REST_URL + "component/checkin",
         headers={"content-type": "application/json"},
         status=requests.codes.bad_request,
     )
@@ -105,7 +105,7 @@ def test_checkin(zmfapi):
 def test_build(zmfapi):
     responses.add(
         responses.PUT,
-        "https://example.com:8080/zmfrest/component/build",
+        ZMF_REST_URL + "component/build",
         json=ZMF_RESP_BUILD_OK,
         headers={"content-type": "application/json"},
         status=requests.codes.ok,
@@ -120,7 +120,7 @@ def test_build(zmfapi):
     responses.reset()
     responses.add(
         responses.PUT,
-        "https://example.com:8080/zmfrest/component/build",
+        ZMF_REST_URL + "component/build",
         json=data_no_info,
         headers={"content-type": "application/json"},
         status=requests.codes.ok,
@@ -136,7 +136,7 @@ def test_build(zmfapi):
     responses.reset()
     responses.add(
         responses.PUT,
-        "https://example.com:8080/zmfrest/component/build",
+        ZMF_REST_URL + "component/build",
         json=data_no_comp,
         headers={"content-type": "application/json"},
         status=requests.codes.ok,
@@ -150,7 +150,7 @@ def test_build(zmfapi):
 def test_build_config(zmfapi, tmp_path):
     responses.add(
         responses.PUT,
-        "https://example.com:8080/zmfrest/component/build",
+        ZMF_REST_URL + "component/build",
         json=ZMF_RESP_BUILD_OK,
         headers={"content-type": "application/json"},
         status=requests.codes.ok,
@@ -184,7 +184,7 @@ def test_build_config(zmfapi, tmp_path):
 def test_scratch(zmfapi):
     responses.add(
         responses.PUT,
-        "https://example.com:8080/zmfrest/component/scratch",
+        ZMF_REST_URL + "component/scratch",
         json=ZMF_RESP_XXXX_OK,
         headers={"content-type": "application/json"},
         status=requests.codes.ok,
@@ -201,7 +201,7 @@ def test_audit(zmfapi):
     }
     responses.add(
         responses.PUT,
-        "https://example.com:8080/zmfrest/package/audit",
+        ZMF_REST_URL + "package/audit",
         json=data,
         headers={"content-type": "application/json"},
         status=requests.codes.ok,
@@ -224,7 +224,7 @@ def test_audit(zmfapi):
 def test_search_package(zmfapi):
     responses.add(
         responses.GET,
-        "https://example.com:8080/zmfrest/package/search",
+        ZMF_REST_URL + "package/search",
         json=ZMF_RESP_SEARCH_000007,
         headers={"content-type": "application/json"},
         status=requests.codes.ok,
@@ -255,7 +255,7 @@ def test_create_package(zmfapi, tmp_path):
     config_file.write_text(yaml.dump(PKG_CONF_YAML_INCL_ID))
     responses.add(
         responses.POST,
-        "https://example.com:8080/zmfrest/package",
+        ZMF_REST_URL + "package",
         json=ZMF_RESP_CREATE_000009,
         headers={"content-type": "application/json"},
         status=requests.codes.ok,
@@ -282,7 +282,7 @@ def test_get_package(zmfapi, tmp_path):
     config_excl_id_file.write_text(yaml.dump(PKG_CONF_YAML_EXCL_ID))
     responses.add(
         responses.GET,
-        "https://example.com:8080/zmfrest/package/search",
+        ZMF_REST_URL + "package/search",
         json=ZMF_RESP_SEARCH_000007,
         headers={"content-type": "application/json"},
         status=requests.codes.ok,
@@ -297,7 +297,7 @@ def test_get_package(zmfapi, tmp_path):
     responses.reset()
     responses.add(
         responses.GET,
-        "https://example.com:8080/zmfrest/package/search",
+        ZMF_REST_URL + "package/search",
         json=ZMF_RESP_XXXX_INFO,
         headers={"content-type": "application/json"},
         status=requests.codes.ok,
@@ -309,7 +309,7 @@ def test_get_package(zmfapi, tmp_path):
     )
     responses.add(
         responses.POST,
-        "https://example.com:8080/zmfrest/package",
+        ZMF_REST_URL + "package",
         json=ZMF_RESP_CREATE_000009,
         headers={"content-type": "application/json"},
         status=requests.codes.ok,

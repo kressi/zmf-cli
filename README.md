@@ -12,9 +12,9 @@ Command line interface (cli) for ChangeMan ZMF through REST API. Using
 
 Export credentials and url, so it is available in later requests.
 ```bash
-export ZMF_REST_URL=https://example.com:8080/zmfrest
-export ZMF_REST_USER=username
-export ZMF_REST_PWD=password
+export ZMF_REST_URL=http://httpbin.org:80/anything/zmfrest
+export ZMF_REST_USER=U000000
+export ZMF_REST_PWD=pa$$w0rd
 zmf build "APP 000001" "['src/SRE/APP00001.sre', 'src/SRB/APP00002.srb', 'src/SRB/APP00003.srb']"
 ```
 
