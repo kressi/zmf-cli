@@ -1,6 +1,7 @@
 import pytest
 import requests
 import responses
+import toml
 import yaml
 
 from zmfcli.zmf import ChangemanZmf, RequestNok, ZmfRestNok
@@ -274,8 +275,8 @@ def test_create_package(zmfapi, tmp_path):
 
 @responses.activate
 def test_get_package(zmfapi, tmp_path):
-    config_incl_id_file = tmp_path / "test.yml"
-    config_incl_id_file.write_text(yaml.dump(PKG_CONF_YAML_INCL_ID))
+    config_incl_id_file = tmp_path / "test.toml"
+    config_incl_id_file.write_text(toml.dumps(PKG_CONF_YAML_INCL_ID))
     assert zmfapi.get_package(config_incl_id_file) == "APP 000001"
 
     config_excl_id_file = tmp_path / "test.yml"

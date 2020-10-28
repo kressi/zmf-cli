@@ -25,7 +25,6 @@ import yaml
 from .logrequests import debug_requests_on
 
 SRC_DIR = "src/"
-SOURCE_LIKE = ["sre", "srb", "src", "sra"]
 SOURCE_LOCATION = {
     "development dataset": 1,
     "package": 5,
@@ -109,10 +108,7 @@ class ChangemanZmf:
         data.update(jobcard(self.__user, "build"))
         if db2Precompile:
             data["useDb2PreCompileOption"] = "Y"
-        source_comps = (c for c in components if extension(c) in SOURCE_LIKE)
-        for t, comps in groupby(
-            sorted(source_comps, key=extension), extension
-        ):
+        for t, comps in groupby(sorted(components, key=extension), extension):
             dt = data.copy()
             dt["componentType"] = t.upper()
             dt["component"] = [Path(c).stem for c in comps]
@@ -129,8 +125,7 @@ class ChangemanZmf:
             "language": "COBOL",
         }
         data.update(jobcard(self.__user, "build"))
-        source_comps = (c for c in components if extension(c) in SOURCE_LIKE)
-        for comp in source_comps:
+        for comp in components:
             dt = data.copy()
             config = allconfigs.get(removeprefix(comp, SRC_DIR))
             if config:
