@@ -4,7 +4,8 @@ import responses
 import toml
 import yaml
 
-from zmfcli.zmf import ChangemanZmf, RequestNok, ZmfRestNok
+from zmfcli.zmf import ChangemanZmf
+from zmfcli.session import RequestNok, ZmfRestNok
 
 
 ZMF_REST_URL = "http://example.com:8080/zmfrest/"
@@ -20,6 +21,12 @@ ZMF_RESP_XXXX_OK = {
     "returnCode": "00",
     "message": "CMNXXXXI - ...",
     "reasonCode": "XXXX",
+}
+
+ZMF_RESP_AUDIT_OK = {
+    "returnCode": "00",
+    "message": "CMN2600I - The job to audit this package has been submitted.",
+    "reasonCode": "2600",
 }
 
 ZMF_RESP_XXXX_INFO = {
@@ -45,6 +52,18 @@ ZMF_RESP_CREATE_000009 = {
             "packageTitle": "fancy package title",
         }
     ],
+}
+
+ZMF_RESP_FREEZE_ERR = {
+    "returnCode": "08",
+    "message": "CMN3025A - Package must be audited when audit level is greater than 0.",  # noqa: E501
+    "reasonCode": "3025",
+}
+
+ZMF_RESP_PROMOTE_OK = {
+    "returnCode": "00",
+    "message": "CMN3281I - request submitted for promotion to DEV0,ALL.",
+    "reasonCode": "3281",
 }
 
 ZMF_RESP_SEARCH_000007 = {
@@ -195,15 +214,10 @@ def test_scratch(zmfapi):
 
 @responses.activate
 def test_audit(zmfapi):
-    data = {
-        "returnCode": "00",
-        "message": "CMN2600I - The job to audit this package has been submitted.",  # noqa: E501
-        "reasonCode": "2600",
-    }
     responses.add(
         responses.PUT,
         ZMF_REST_URL + "package/audit",
-        json=data,
+        json=ZMF_RESP_AUDIT_OK,
         headers={"content-type": "application/json"},
         status=requests.codes.ok,
         match=[
@@ -219,6 +233,78 @@ def test_audit(zmfapi):
         ],
     )
     assert zmfapi.audit("APP 000000") is None
+
+
+@responses.activate
+def test_freeze(zmfapi):
+    responses.add(
+        responses.PUT,
+        ZMF_REST_URL + "package/freeze",
+        json=ZMF_RESP_XXXX_OK,
+        headers={"content-type": "application/json"},
+        status=requests.codes.ok,
+        match=[
+            responses.urlencoded_params_matcher(
+                {
+                    "package": "APP 000000",
+                    "jobCard01": "//U000000F JOB 0,'CHANGEMAN',",
+                    "jobCard02": "//         CLASS=A,MSGCLASS=A,",
+                    "jobCard03": "//         NOTIFY=&SYSUID",
+                    "jobCard04": "//*",
+                }
+            ),
+        ],
+    )
+    assert zmfapi.freeze("APP 000000") is None
+
+
+@responses.activate
+def test_revert(zmfapi):
+    responses.add(
+        responses.PUT,
+        ZMF_REST_URL + "package/revert",
+        json=ZMF_RESP_XXXX_OK,
+        headers={"content-type": "application/json"},
+        status=requests.codes.ok,
+        match=[
+            responses.urlencoded_params_matcher(
+                {
+                    "package": "APP 000000",
+                    "jobCard01": "//U000000R JOB 0,'CHANGEMAN',",
+                    "jobCard02": "//         CLASS=A,MSGCLASS=A,",
+                    "jobCard03": "//         NOTIFY=&SYSUID",
+                    "jobCard04": "//*",
+                }
+            ),
+        ],
+    )
+    assert zmfapi.revert("APP 000000") is None
+
+
+@responses.activate
+def test_promote(zmfapi):
+    responses.add(
+        responses.PUT,
+        ZMF_REST_URL + "package/promote",
+        json=ZMF_RESP_PROMOTE_OK,
+        headers={"content-type": "application/json"},
+        status=requests.codes.ok,
+        match=[
+            responses.urlencoded_params_matcher(
+                {
+                    "package": "APP 000000",
+                    "promotionSiteName": "DEV0",
+                    "promotionLevel": "42",
+                    "promotionName": "ALL",
+                    "jobCard01": "//U000000P JOB 0,'CHANGEMAN',",
+                    "jobCard02": "//         CLASS=A,MSGCLASS=A,",
+                    "jobCard03": "//         NOTIFY=&SYSUID",
+                    "jobCard04": "//*",
+                }
+            ),
+        ],
+    )
+    assert zmfapi.promote("APP 000000", "DEV0", 42, "ALL") is None
 
 
 @responses.activate
