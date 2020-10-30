@@ -4,25 +4,14 @@ import sys
 
 from itertools import groupby
 from pathlib import Path
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Iterable,
-    List,
-    MutableMapping,
-    Optional,
-    TypedDict,
-    Union,
-)
-from urllib.parse import urljoin
+from typing import Any, Dict, Iterable, MutableMapping, Optional, Union
 
 import fire  # type: ignore
-import requests
 import toml
 import yaml
 
 from .logrequests import debug_requests_on
+from .session import ZmfRequest, ZmfSession
 
 SRC_DIR = "src/"
 SOURCE_LOCATION = {
@@ -37,19 +26,6 @@ SOURCE_STORAGE = {
     "pds/extended": 9,
     "hfs": "H",
 }
-ZMF_STATUS_OK = "00"
-ZMF_STATUS_INFO = "04"
-ZMF_STATUS_FAILURE = "08"
-
-Payload = Dict[str, Union[str, List[str]]]
-ZmfResult = List[Dict[str, Union[str, int]]]
-
-
-class ZmfResponse(TypedDict, total=False):
-    returnCode: str
-    message: str
-    reasonCode: str
-    result: ZmfResult
 
 
 class ChangemanZmf:
@@ -70,10 +46,10 @@ class ChangemanZmf:
         self.__session: ZmfSession = ZmfSession(self.url)
         self.__session.auth = (self.__user, self.__password)
         if verbose:
-            self.logger.setLevel(logging.DEBUG)
+            logging.getLogger().setLevel(logging.DEBUG)
             debug_requests_on()
         else:
-            self.logger.setLevel(logging.INFO)
+            logging.getLogger().setLevel(logging.INFO)
 
     def checkin(
         self, package: str, pds: str, components: Iterable[str]
@@ -100,7 +76,7 @@ class ChangemanZmf:
         db2Precompile: Optional[bool] = None,
     ) -> None:
         """build source like components"""
-        data: Payload = {
+        data: ZmfRequest = {
             "package": package,
             "buildProc": procedure,
             "language": language,
@@ -147,15 +123,28 @@ class ChangemanZmf:
         data.update(jobcard(self.__user, "audit"))
         self.__session.result_put("package/audit", data=data)
 
-    def promote(self, package: str) -> None:
+    def promote(
+        self, package: str, promSiteName: str, promLevel: int, promName: str
+    ) -> None:
         """promote a package"""
-        print("promote")
+        data = {
+            "package": package,
+            "promotionSiteName": promSiteName,
+            "promotionLevel": promLevel,
+            "promotionName": promName,
+        }
+        data.update(jobcard(self.__user, "promote"))
+        self.__session.result_put("package/promote", data=data)
 
     def freeze(self, package: str) -> None:
-        print("freeze")
+        data = {"package": package}
+        data.update(jobcard(self.__user, "freeze"))
+        self.__session.result_put("package/freeze", data=data)
 
     def revert(self, package: str) -> None:
-        print("revert")
+        data = {"package": package}
+        data.update(jobcard(self.__user, "revert"))
+        self.__session.result_put("package/revert", data=data)
 
     def search_package(
         self, app: str, title: str, workChangeRequest: Optional[str] = None
@@ -216,73 +205,6 @@ class ChangemanZmf:
         if not pkg_id:
             pkg_id = self.create_package(config_file, app, title)
         return pkg_id
-
-
-# https://stackoverflow.com/a/51026159
-class LoggedSession(requests.Session):
-    def __init__(
-        self, prefix_url: str = "", *args: Any, **kwargs: Any
-    ) -> None:
-        # Ignore type issue, https://github.com/python/mypy/issues/5887
-        # super().__init__(....) in mixins fails with `Too many arguments...`
-        super().__init__(*args, **kwargs)  # type: ignore
-        self.prefix_url = prefix_url
-        self.logger = logging.getLogger(__name__)
-
-    def request(
-        self, method: str, url: Union[str, bytes], *args: Any, **kwargs: Any
-    ) -> requests.Response:
-        if isinstance(url, bytes):
-            url = url.decode("utf-8")
-        req_url = urljoin(self.prefix_url, url)
-        self.logger.info("%s %s", method, req_url)
-        self.logger.info(kwargs.get("data"))
-        return super().request(method, req_url, *args, **kwargs)
-
-
-def unpack_result(
-    req: Callable[..., requests.Response]
-) -> Callable[..., Optional[ZmfResult]]:
-    def wrapper(
-        self: LoggedSession, *args: Any, **kwargs: Any
-    ) -> Optional[ZmfResult]:
-        resp = req(self, *args, **kwargs)
-        if not resp.ok:
-            raise RequestNok(resp.status_code)
-        payload: ZmfResponse = resp.json()
-        self.logger.info(
-            {
-                k: payload.get(k)
-                for k in ["returnCode", "message", "reasonCode"]
-            }
-        )
-        if payload.get("returnCode") not in [ZMF_STATUS_OK, ZMF_STATUS_INFO]:
-            raise ZmfRestNok(payload.get("message"))
-        return payload.get("result")
-
-    return wrapper
-
-
-class ZmfSession(LoggedSession):
-    @unpack_result
-    def result_get(self, *args: Any, **kwargs: Any) -> requests.Response:
-        return super().get(*args, **kwargs)
-
-    @unpack_result
-    def result_post(self, *args: Any, **kwargs: Any) -> requests.Response:
-        return super().post(*args, **kwargs)
-
-    @unpack_result
-    def result_put(self, *args: Any, **kwargs: Any) -> requests.Response:
-        return super().put(*args, **kwargs)
-
-
-class RequestNok(Exception):
-    pass
-
-
-class ZmfRestNok(Exception):
-    pass
 
 
 def extension(file: str) -> str:
