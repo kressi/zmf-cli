@@ -60,6 +60,49 @@ ZMF_RESP_FREEZE_ERR = {
     "reasonCode": "3025",
 }
 
+ZMF_RESP_LOAD_COMP_OK = {
+    "returnCode": "00",
+    "message": "CMN8700I - LIST service completed",
+    "reasonCode": "8700",
+    "result": [
+        {
+            "componentType": "SRB",
+            "package": "APP 000001",
+            "setssi": "BK72NB9A",
+            "targetComponent": "APPB0001",
+            "rebuildFromBaseline": "N",
+            "packageId": 1,
+            "timeLastModifiedUtc": "1604083542",
+            "timeLastModified": "1604083542",
+            "componentStatus": "0 - Active",
+            "updater": "U000000",
+            "component": "APPB0001",
+            "targetComponentType": "LST",
+            "dateLastModified": "20200101",
+            "applName": "APP",
+            "dateLastModifiedUtc": "20200101",
+        },
+        {
+            "componentType": "SRE",
+            "package": "APP 000001",
+            "setssi": "BK72NB9B",
+            "targetComponent": "APPE0001",
+            "rebuildFromBaseline": "N",
+            "packageId": 1,
+            "timeLastModifiedUtc": "1604083579",
+            "timeLastModified": "1604083579",
+            "componentStatus": "0 - Active",
+            "updater": "U000000",
+            "component": "APPE0001",
+            "targetComponentType": "LST",
+            "dateLastModified": "20200101",
+            "applName": "APP",
+            "dateLastModifiedUtc": "20200101",
+        },
+    ],
+}
+
+
 ZMF_RESP_PROMOTE_OK = {
     "returnCode": "00",
     "message": "CMN3281I - request submitted for promotion to DEV0,ALL.",
@@ -405,3 +448,26 @@ def test_get_package(zmfapi, tmp_path):
         ],
     )
     assert zmfapi.get_package(config_excl_id_file) == "APP 000009"
+
+
+@responses.activate
+def test_get_load_components(zmfapi):
+    responses.add(
+        responses.GET,
+        ZMF_REST_URL + "component/load",
+        json=ZMF_RESP_LOAD_COMP_OK,
+        headers={"content-type": "application/json"},
+        status=requests.codes.ok,
+        match=[
+            responses.urlencoded_params_matcher(
+                {
+                    "package": "APP 000001",
+                    "targetComponentType": "LST",
+                }
+            ),
+        ],
+    )
+    assert (
+        zmfapi.get_load_components("APP 000001", targetType="LST")
+        == ZMF_RESP_LOAD_COMP_OK["result"]
+    )

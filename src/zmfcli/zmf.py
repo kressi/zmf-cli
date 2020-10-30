@@ -81,9 +81,9 @@ class ChangemanZmf:
             "buildProc": procedure,
             "language": language,
         }
-        data.update(jobcard(self.__user, "build"))
         if db2Precompile:
             data["useDb2PreCompileOption"] = "Y"
+        data.update(jobcard(self.__user, "build"))
         for t, comps in groupby(sorted(components, key=extension), extension):
             dt = data.copy()
             dt["componentType"] = t.upper()
@@ -153,7 +153,7 @@ class ChangemanZmf:
             "package": app + "*",
             "packageTitle": title,
         }
-        if workChangeRequest:
+        if workChangeRequest is not None:
             data["workChangeRequest"] = workChangeRequest
         result = self.__session.result_get("package/search", data=data)
         pkg_id = None
@@ -205,6 +205,25 @@ class ChangemanZmf:
         if not pkg_id:
             pkg_id = self.create_package(config_file, app, title)
         return pkg_id
+
+    def get_load_components(
+        self,
+        package: str,
+        sourceType: Optional[str] = None,
+        sourceComponent: Optional[str] = None,
+        targetType: Optional[str] = None,
+        targetComponent: Optional[str] = None,
+    ) -> Optional[Iterable[Dict[str, Union[str, int]]]]:
+        data = {"package": package}
+        if sourceType is not None:
+            data["componentType"] = sourceType
+        if sourceComponent is not None:
+            data["component"] = sourceComponent
+        if targetType is not None:
+            data["targetComponentType"] = targetType
+        if targetComponent is not None:
+            data["targetComponent"] = targetComponent
+        return self.__session.result_get("component/load", data=data)
 
 
 def extension(file: str) -> str:
