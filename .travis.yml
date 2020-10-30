@@ -8,7 +8,7 @@ jobs:
   include:
     - &stage_deploy
       stage: deploy test
-      if: NOT branch = main
+      if: branch != main
       install:
         - pip install --upgrade pip
         - pip install twine build
@@ -21,7 +21,7 @@ jobs:
 
     - <<: *stage_deploy
       stage: deploy prod
-      if: branch = main
+      if: branch = main AND type != pull_request
       script:
         - twine upload dist/*
 
