@@ -44,6 +44,7 @@ class ChangemanZmf:
         search_package        GET package/search
         create_package        POST package
         get_package           Search and create if package does not exist
+        get_components        GET component
         get_load_components   GET component/load
         browse_component      GET component/browse
 
@@ -225,6 +226,19 @@ class ChangemanZmf:
         if not pkg_id:
             pkg_id = self.create_package(config_file, app, title)
         return pkg_id
+
+    def get_components(
+        self,
+        package: str,
+        componentType: Optional[str] = None,
+        component: Optional[str] = None,
+    ) -> Optional[ZmfResult]:
+        data = {"package": package}
+        if componentType is not None:
+            data["componentType"] = componentType
+        if component is not None:
+            data["component"] = component
+        return self.__session.result_get("component", data=data)
 
     def get_load_components(
         self,

@@ -48,6 +48,31 @@ ZMF_RESP_BUILD_OK = {
     "reasonCode": "8700",
 }
 
+ZMF_RESP_COMP_OK = {
+    "returnCode": "00",
+    "message": "CMN8700I - LIST service completed",
+    "reasonCode": "8700",
+    "result": [
+        {
+            "componentType": "SRB",
+            "package": "APP 000001",
+            "setssi": "BK72NB9A",
+            "targetComponent": "APPB0001",
+            "rebuildFromBaseline": "N",
+            "packageId": 1,
+            "timeLastModifiedUtc": "1604083542",
+            "timeLastModified": "1604083542",
+            "componentStatus": "0 - Active",
+            "updater": "U000000",
+            "component": "APPB0001",
+            "targetComponentType": "SRB",
+            "dateLastModified": "20200101",
+            "applName": "APP",
+            "dateLastModifiedUtc": "20200101",
+        },
+    ],
+}
+
 ZMF_RESP_CREATE_000009 = {
     "returnCode": "00",
     "message": "CMN2100I - APP 000008 change package has been created.",
@@ -108,7 +133,6 @@ ZMF_RESP_LOAD_COMP_OK = {
         },
     ],
 }
-
 
 ZMF_RESP_PROMOTE_OK = {
     "returnCode": "00",
@@ -424,6 +448,27 @@ def test_get_package(zmfapi, tmp_path):
         ],
     )
     assert zmfapi.get_package(config_excl_id_file) == "APP 000009"
+
+
+@responses.activate
+def test_get_components(zmfapi):
+    responses.add(
+        responses.GET,
+        ZMF_REST_URL + "component",
+        json=ZMF_RESP_COMP_OK,
+        match=[
+            responses.urlencoded_params_matcher(
+                {
+                    "package": "APP 000001",
+                    "component": "APPB0001",
+                }
+            ),
+        ],
+    )
+    assert (
+        zmfapi.get_components("APP 000001", component="APPB0001")
+        == ZMF_RESP_COMP_OK["result"]
+    )
 
 
 @responses.activate

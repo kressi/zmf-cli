@@ -57,17 +57,18 @@ $ zmf promote --help
 |----------------------|---------------------------------------------|
 | checkin              | PUT component/checkin                       |
 | build                | PUT component/build                         |
-| build_config         | PUT component/build                         |
+| build-config         | PUT component/build                         |
 | scratch              | PUT component/scratch                       |
 | audit                | PUT package/audit                           |
 | promote              | PUT package/promote                         |
 | freeze               | PUT package/freeze                          |
 | revert               | PUT package/revert                          |
-| search_package       | GET package/search                          |
-| create_package       | POST package                                |
-| get_package          | Search and create if package does not exist |
-| get_load_components  | GET component/load                          |
-| browse_component     | GET component/browse                        |
+| search-package       | GET package/search                          |
+| create-package       | POST package                                |
+| get-package          | Search and create if package does not exist |
+| get-components       | GET component                               |
+| get-load-components  | GET component/load                          |
+| browse-component     | GET component/browse                        |
 
 ### Pretty print result
 Some results may return JSON data, this data can be pretty printed with Python
