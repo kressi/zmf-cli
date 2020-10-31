@@ -10,7 +10,8 @@ Command line interface (cli) for ChangeMan ZMF through REST API. Using
 
 ## Usage
 
-Export credentials and url, so it is available in later requests.
+Credentials and url can be exported to `ZMF_REST_` variables, so those
+do not need to be privided with each command execution.
 ```bash
 export ZMF_REST_URL=http://httpbin.org:80/anything/zmfrest
 export ZMF_REST_USER=U000000
@@ -20,31 +21,33 @@ zmf build "APP 000001" "['src/SRE/APP00001.sre', 'src/SRB/APP00002.srb', 'src/SR
 
 Create package from a config
 ```bash
-cat <<'CONFIG' | zmf create-package
-applName: APP
-createMethod: 0
-packageLevel: 1
-packageType: 1
-requestorDept: DEVB
-requestorName: DEVA
-requestorPhone: 01000000
-workChangeRequest: APP 000000
-packageTitle: DEV release/2021-12-31
-packageDesc: created with ZMF Rest API
-siteName: ZPLEX0
-installDate: 20211231
-fromInstallTime: 0000
-toInstallTime: 2359
-contactName: Timothy Leary
-contactPhone: 01000000
-alternateContactName: Terrence McKenna
-alternateContactPhone: 01000000
+cat <<'CONFIG' > pkg-config.toml
+applName = "APP"
+createMethod = "0"
+packageLevel = "1"
+packageType = "1"
+requestorDept = "DEVB"
+requestorName = "DEVA"
+requestorPhone = "01000000"
+workChangeRequest = "APP 000000"
+packageTitle = "DEV release/2021-12-31"
+packageDesc = "created with ZMF Rest API"
+siteName = "ZPLEX0"
+installDate = "20211231"
+fromInstallTime = "0000"
+toInstallTime = "2359"
+contactName = "Timothy Leary"
+contactPhone = "01000000"
+alternateContactName = "Terrence McKenna"
+alternateContactPhone = "01000000"
 CONFIG
+$ zmf create-package pkg-config.toml
 ```
 
+## Pretty print result
 Pretty print response message with Python
 ```bash
-zmf checkin "APP 000001" "PDS.BASE.DIR" "['src/SRE/APP00001.sre']" | python -m json.tools
+zmf get-load-components "APP 000001" "LST" | python -m json.tools
 ```
 
 ## ChangeMan ZMF Documents
