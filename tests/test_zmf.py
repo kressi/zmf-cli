@@ -1,3 +1,4 @@
+import json
 import pytest
 import requests
 import responses
@@ -23,16 +24,22 @@ ZMF_RESP_XXXX_OK = {
     "reasonCode": "XXXX",
 }
 
+ZMF_RESP_XXXX_INFO = {
+    "returnCode": "04",
+    "message": "CMNXXXXI - ...",
+    "reasonCode": "XXXX",
+}
+
 ZMF_RESP_AUDIT_OK = {
     "returnCode": "00",
     "message": "CMN2600I - The job to audit this package has been submitted.",
     "reasonCode": "2600",
 }
 
-ZMF_RESP_XXXX_INFO = {
+ZMF_RESP_BROWSE_INFO = {
     "returnCode": "04",
-    "message": "CMNXXXXI - ...",
-    "reasonCode": "XXXX",
+    "message": "Member NOTEXIST not found",
+    "reasonCode": "0000",
 }
 
 ZMF_RESP_BUILD_OK = {
@@ -148,15 +155,12 @@ def test_checkin(zmfapi):
         responses.PUT,
         ZMF_REST_URL + "component/checkin",
         json=ZMF_RESP_XXXX_OK,
-        headers={"content-type": "application/json"},
-        status=requests.codes.ok,
     )
     assert zmfapi.checkin("APP 000000", "U000000.LIB", COMPONENTS) is None
     responses.reset()
     responses.add(
         responses.PUT,
         ZMF_REST_URL + "component/checkin",
-        headers={"content-type": "application/json"},
         status=requests.codes.bad_request,
     )
     with pytest.raises(RequestNok) as excinfo:
@@ -170,8 +174,6 @@ def test_build(zmfapi):
         responses.PUT,
         ZMF_REST_URL + "component/build",
         json=ZMF_RESP_BUILD_OK,
-        headers={"content-type": "application/json"},
-        status=requests.codes.ok,
     )
     assert zmfapi.build("APP 000000", COMPONENTS) is None
     assert zmfapi.build("APP 000000", COMPONENTS, db2Precompile=True) is None
@@ -185,8 +187,6 @@ def test_build(zmfapi):
         responses.PUT,
         ZMF_REST_URL + "component/build",
         json=data_no_info,
-        headers={"content-type": "application/json"},
-        status=requests.codes.ok,
     )
     with pytest.raises(ZmfRestNok) as excinfo:
         zmfapi.build("APP 000000", COMPONENTS)
@@ -201,8 +201,6 @@ def test_build(zmfapi):
         responses.PUT,
         ZMF_REST_URL + "component/build",
         json=data_no_comp,
-        headers={"content-type": "application/json"},
-        status=requests.codes.ok,
     )
     with pytest.raises(ZmfRestNok) as excinfo:
         zmfapi.build("APP 000000", ["file/does/not/exist.sre"])
@@ -215,8 +213,6 @@ def test_build_config(zmfapi, tmp_path):
         responses.PUT,
         ZMF_REST_URL + "component/build",
         json=ZMF_RESP_BUILD_OK,
-        headers={"content-type": "application/json"},
-        status=requests.codes.ok,
     )
     file = tmp_path / "test.yml"
     build_config = {
@@ -249,8 +245,6 @@ def test_scratch(zmfapi):
         responses.PUT,
         ZMF_REST_URL + "component/scratch",
         json=ZMF_RESP_XXXX_OK,
-        headers={"content-type": "application/json"},
-        status=requests.codes.ok,
     )
     assert zmfapi.scratch("APP 000000", COMPONENTS) is None
 
@@ -261,8 +255,6 @@ def test_audit(zmfapi):
         responses.PUT,
         ZMF_REST_URL + "package/audit",
         json=ZMF_RESP_AUDIT_OK,
-        headers={"content-type": "application/json"},
-        status=requests.codes.ok,
         match=[
             responses.urlencoded_params_matcher(
                 {
@@ -284,8 +276,6 @@ def test_freeze(zmfapi):
         responses.PUT,
         ZMF_REST_URL + "package/freeze",
         json=ZMF_RESP_XXXX_OK,
-        headers={"content-type": "application/json"},
-        status=requests.codes.ok,
         match=[
             responses.urlencoded_params_matcher(
                 {
@@ -307,8 +297,6 @@ def test_revert(zmfapi):
         responses.PUT,
         ZMF_REST_URL + "package/revert",
         json=ZMF_RESP_XXXX_OK,
-        headers={"content-type": "application/json"},
-        status=requests.codes.ok,
         match=[
             responses.urlencoded_params_matcher(
                 {
@@ -330,8 +318,6 @@ def test_promote(zmfapi):
         responses.PUT,
         ZMF_REST_URL + "package/promote",
         json=ZMF_RESP_PROMOTE_OK,
-        headers={"content-type": "application/json"},
-        status=requests.codes.ok,
         match=[
             responses.urlencoded_params_matcher(
                 {
@@ -356,8 +342,6 @@ def test_search_package(zmfapi):
         responses.GET,
         ZMF_REST_URL + "package/search",
         json=ZMF_RESP_SEARCH_000007,
-        headers={"content-type": "application/json"},
-        status=requests.codes.ok,
         match=[
             responses.urlencoded_params_matcher(
                 {"package": "APP*", "packageTitle": "fancy package title"}
@@ -387,8 +371,6 @@ def test_create_package(zmfapi, tmp_path):
         responses.POST,
         ZMF_REST_URL + "package",
         json=ZMF_RESP_CREATE_000009,
-        headers={"content-type": "application/json"},
-        status=requests.codes.ok,
         match=[
             responses.urlencoded_params_matcher(
                 {
@@ -414,8 +396,6 @@ def test_get_package(zmfapi, tmp_path):
         responses.GET,
         ZMF_REST_URL + "package/search",
         json=ZMF_RESP_SEARCH_000007,
-        headers={"content-type": "application/json"},
-        status=requests.codes.ok,
         match=[
             responses.urlencoded_params_matcher(
                 {"package": "APP*", "packageTitle": "fancy package title"}
@@ -429,8 +409,6 @@ def test_get_package(zmfapi, tmp_path):
         responses.GET,
         ZMF_REST_URL + "package/search",
         json=ZMF_RESP_XXXX_INFO,
-        headers={"content-type": "application/json"},
-        status=requests.codes.ok,
         match=[
             responses.urlencoded_params_matcher(
                 {"package": "APP*", "packageTitle": "fancy package title"}
@@ -441,8 +419,6 @@ def test_get_package(zmfapi, tmp_path):
         responses.POST,
         ZMF_REST_URL + "package",
         json=ZMF_RESP_CREATE_000009,
-        headers={"content-type": "application/json"},
-        status=requests.codes.ok,
         match=[
             responses.urlencoded_params_matcher(PKG_CONF_YAML_EXCL_ID),
         ],
@@ -456,8 +432,6 @@ def test_get_load_components(zmfapi):
         responses.GET,
         ZMF_REST_URL + "component/load",
         json=ZMF_RESP_LOAD_COMP_OK,
-        headers={"content-type": "application/json"},
-        status=requests.codes.ok,
         match=[
             responses.urlencoded_params_matcher(
                 {
@@ -471,3 +445,53 @@ def test_get_load_components(zmfapi):
         zmfapi.get_load_components("APP 000001", targetType="LST")
         == ZMF_RESP_LOAD_COMP_OK["result"]
     )
+
+
+ZMF_RESP_BROWSE_RICK = (
+    "You ever hear about Wall Street, Morty? "
+    "You know what those guys do in their\n"
+    "fancy boardrooms? They take their balls "
+    "and they dip them in cocaine and wipe\n"
+    "them all over each other.\n\n"
+    "àáâãäåæçèéêëìíîï"
+)
+
+
+@responses.activate
+def test_browse_component(zmfapi):
+    responses.add(
+        responses.GET,
+        ZMF_REST_URL + "component/browse",
+        body=ZMF_RESP_BROWSE_RICK.encode("iso-8859-1"),
+        content_type="text/plain;charset=ISO-8859-1",
+        headers={"Content-Disposition": "attachment;filename=RICK"},
+        match=[
+            responses.urlencoded_params_matcher(
+                {
+                    "package": "APP 000001",
+                    "component": "RICK",
+                    "componentType": "LST",
+                }
+            ),
+        ],
+    )
+    responses.add(
+        responses.GET,
+        ZMF_REST_URL + "component/browse",
+        body=json.dumps(ZMF_RESP_BROWSE_INFO).encode("iso-8859-1"),
+        content_type="application/json;charset=ISO-8859-1",
+        match=[
+            responses.urlencoded_params_matcher(
+                {
+                    "package": "APP 000001",
+                    "component": "NOTEXIST",
+                    "componentType": "LST",
+                }
+            ),
+        ],
+    )
+    assert (
+        zmfapi.browse_component("APP 000001", "RICK", "LST")
+        == ZMF_RESP_BROWSE_RICK
+    )
+    assert zmfapi.browse_component("APP 000001", "NOTEXIST", "LST") is None

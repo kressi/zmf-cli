@@ -11,7 +11,7 @@ import toml
 import yaml
 
 from .logrequests import debug_requests_on
-from .session import ZmfRequest, ZmfSession
+from .session import ZmfRequest, ZmfRestNok, ZmfResult, ZmfSession
 
 SRC_DIR = "src/"
 SOURCE_LOCATION = {
@@ -213,7 +213,7 @@ class ChangemanZmf:
         sourceComponent: Optional[str] = None,
         targetType: Optional[str] = None,
         targetComponent: Optional[str] = None,
-    ) -> Optional[Iterable[Dict[str, Union[str, int]]]]:
+    ) -> Optional[ZmfResult]:
         data = {"package": package}
         if sourceType is not None:
             data["componentType"] = sourceType
@@ -224,6 +224,35 @@ class ChangemanZmf:
         if targetComponent is not None:
             data["targetComponent"] = targetComponent
         return self.__session.result_get("component/load", data=data)
+
+    def browse_component(
+        self,
+        package: str,
+        component: str,
+        componentType: str,
+    ) -> Optional[str]:
+        result = None
+        data = {
+            "package": package,
+            "component": component,
+            "componentType": componentType,
+        }
+        resp = self.__session.get("component/browse", data=data)
+        self.logger.info(
+            {
+                k: resp.headers.get(k)
+                for k in ["content-type", "content-disposition"]
+            }
+        )
+        tp = resp.headers.get("content-type", "")
+        disp = resp.headers.get("content-disposition", "")
+        if tp.startswith("application/json"):
+            self.logger.warning(resp.json())
+        elif tp.startswith("text/plain") and disp.startswith("attachment"):
+            result = resp.text
+        else:
+            raise ZmfRestNok()
+        return result
 
 
 def extension(file: str) -> str:

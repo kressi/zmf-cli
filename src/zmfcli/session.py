@@ -3,7 +3,7 @@ import logging
 from typing import Any, Callable, Dict, List, Optional, TypedDict, Union
 from urllib.parse import urljoin
 
-import requests
+from requests import Response, Session
 
 ZMF_STATUS_OK = "00"
 ZMF_STATUS_INFO = "04"
@@ -21,7 +21,7 @@ class ZmfResponse(TypedDict, total=False):
 
 
 # Credits to: https://stackoverflow.com/a/51026159
-class LoggedSession(requests.Session):
+class LoggedSession(Session):
     def __init__(
         self, prefix_url: str = "", *args: Any, **kwargs: Any
     ) -> None:
@@ -33,7 +33,7 @@ class LoggedSession(requests.Session):
 
     def request(
         self, method: str, url: Union[str, bytes], *args: Any, **kwargs: Any
-    ) -> requests.Response:
+    ) -> Response:
         if isinstance(url, bytes):
             url = url.decode("utf-8")
         req_url = urljoin(self.prefix_url, url)
@@ -43,14 +43,13 @@ class LoggedSession(requests.Session):
 
 
 def unpack_result(
-    req: Callable[..., requests.Response]
+    req: Callable[..., Response]
 ) -> Callable[..., Optional[ZmfResult]]:
     def wrapper(
         self: LoggedSession, *args: Any, **kwargs: Any
     ) -> Optional[ZmfResult]:
         resp = req(self, *args, **kwargs)
-        if not resp.ok:
-            raise RequestNok(resp.status_code)
+        check_json(resp)
         payload: ZmfResponse = resp.json()
         self.logger.info(
             {
@@ -67,15 +66,15 @@ def unpack_result(
 
 class ZmfSession(LoggedSession):
     @unpack_result
-    def result_get(self, *args: Any, **kwargs: Any) -> requests.Response:
+    def result_get(self, *args: Any, **kwargs: Any) -> Response:
         return super().get(*args, **kwargs)
 
     @unpack_result
-    def result_post(self, *args: Any, **kwargs: Any) -> requests.Response:
+    def result_post(self, *args: Any, **kwargs: Any) -> Response:
         return super().post(*args, **kwargs)
 
     @unpack_result
-    def result_put(self, *args: Any, **kwargs: Any) -> requests.Response:
+    def result_put(self, *args: Any, **kwargs: Any) -> Response:
         return super().put(*args, **kwargs)
 
 
@@ -85,3 +84,11 @@ class RequestNok(Exception):
 
 class ZmfRestNok(Exception):
     pass
+
+
+def check_json(r: Response) -> None:
+    if not r.ok:
+        raise RequestNok(r.status_code)
+    t = r.headers.get("content-type", "")
+    if not t.startswith("application/json"):
+        raise RequestNok("Expected content-type 'application/json'", t)
