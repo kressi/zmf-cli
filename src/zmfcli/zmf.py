@@ -11,7 +11,7 @@ import toml
 import yaml
 
 from .logrequests import debug_requests_on
-from .session import ZmfRequest, ZmfRestNok, ZmfResult, ZmfSession
+from .session import RequestNok, ZmfRequest, ZmfRestNok, ZmfResult, ZmfSession
 
 SRC_DIR = "src/"
 SOURCE_LOCATION = {
@@ -71,19 +71,22 @@ class ChangemanZmf:
         self,
         package: str,
         components: Iterable[str],
-        procedure: str = "CMNCOB2",
-        language: str = "COBOL",
+        procedure: Optional[str] = None,
+        language: Optional[str] = None,
         db2Precompile: Optional[bool] = None,
+        useHistory: Optional[bool] = None,
     ) -> None:
         """build source like components"""
-        data: ZmfRequest = {
-            "package": package,
-            "buildProc": procedure,
-            "language": language,
-        }
-        if db2Precompile:
-            data["useDb2PreCompileOption"] = "Y"
+        data: ZmfRequest = {"package": package}
         data.update(jobcard(self.__user, "build"))
+        if procedure is not None:
+            data["buildProc"] = procedure
+        if language is not None:
+            data["language"] = language
+        if db2Precompile is not None:
+            data["useDb2PreCompileOption"] = to_yes_no(db2Precompile)
+        if useHistory is not None:
+            data["useHistory"] = to_yes_no(useHistory)
         for t, comps in groupby(sorted(components, key=extension), extension):
             dt = data.copy()
             dt["componentType"] = t.upper()
@@ -226,10 +229,7 @@ class ChangemanZmf:
         return self.__session.result_get("component/load", data=data)
 
     def browse_component(
-        self,
-        package: str,
-        component: str,
-        componentType: str,
+        self, package: str, component: str, componentType: str
     ) -> Optional[str]:
         result = None
         data = {
@@ -238,6 +238,8 @@ class ChangemanZmf:
             "componentType": componentType,
         }
         resp = self.__session.get("component/browse", data=data)
+        if not resp.ok:
+            raise RequestNok(resp.status_code)
         self.logger.info(
             {
                 k: resp.headers.get(k)
@@ -284,7 +286,7 @@ def read_config(
     return data
 
 
-def removeprefix(self: str, prefix: str, /) -> str:
+def removeprefix(self: str, prefix: str) -> str:
     if self.startswith(prefix):
         return self[len(prefix) :]
     else:
@@ -305,6 +307,13 @@ def str_or_none(a: Union[int, str, None]) -> Optional[str]:
         return None
     else:
         return str(a)
+
+
+def to_yes_no(x: bool) -> str:
+    if x is True:
+        return "Y"
+    else:
+        return "N"
 
 
 def main() -> None:
