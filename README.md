@@ -10,6 +10,25 @@ Command line interface (cli) for ChangeMan ZMF through REST API. Using
 
 ## Usage
 
+### Commands
+
+| Command              | Description                                 |
+|----------------------|---------------------------------------------|
+| checkin              | PUT component/checkin                       |
+| build                | PUT component/build                         |
+| build_config         | PUT component/build                         |
+| scratch              | PUT component/scratch                       |
+| audit                | PUT package/audit                           |
+| promote              | PUT package/promote                         |
+| freeze               | PUT package/freeze                          |
+| revert               | PUT package/revert                          |
+| search_package       | GET package/search                          |
+| create_package       | POST package                                |
+| get_package          | Search and create if package does not exist |
+| get_load_components  | GET component/load                          |
+| browse_component     | GET component/browse                        |
+
+### Credentials
 Credentials and url can be exported to `ZMF_REST_` variables, so those
 do not need to be privided with each command execution.
 ```bash
@@ -19,6 +38,7 @@ export ZMF_REST_PWD=pa$$w0rd
 zmf build "APP 000001" "['src/SRE/APP00001.sre', 'src/SRB/APP00002.srb', 'src/SRB/APP00003.srb']"
 ```
 
+### Example
 Create package from a config
 ```bash
 cat <<'CONFIG' > pkg-config.toml
@@ -44,7 +64,7 @@ CONFIG
 $ zmf create-package pkg-config.toml
 ```
 
-## Pretty print result
+### Pretty print result
 Pretty print response message with Python
 ```bash
 zmf get-load-components "APP 000001" "LST" | python -m json.tools

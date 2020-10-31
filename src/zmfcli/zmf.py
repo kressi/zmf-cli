@@ -29,6 +29,28 @@ SOURCE_STORAGE = {
 
 
 class ChangemanZmf:
+    """
+    Command line interface for ZMF REST API
+
+    Available commands:
+        checkin               PUT component/checkin
+        build                 PUT component/build
+        build_config          PUT component/build
+        scratch               PUT component/scratch
+        audit                 PUT package/audit
+        promote               PUT package/promote
+        freeze                PUT package/freeze
+        revert                PUT package/revert
+        search_package        GET package/search
+        create_package        POST package
+        get_package           Search and create if package does not exist
+        get_load_components   GET component/load
+        browse_component      GET component/browse
+
+    Get help for commands with
+        zmf [command] --help
+    """
+
     def __init__(
         self,
         user: Optional[str] = None,
@@ -54,7 +76,7 @@ class ChangemanZmf:
     def checkin(
         self, package: str, pds: str, components: Iterable[str]
     ) -> None:
-        """checkin components from a partitioned dataset (PDS)"""
+        """Checkin components to Changeman from a partitioned dataset (PDS)"""
         data = {
             "package": package,
             "chkInSourceLocation": SOURCE_LOCATION["development dataset"],
@@ -76,7 +98,7 @@ class ChangemanZmf:
         db2Precompile: Optional[bool] = None,
         useHistory: Optional[bool] = None,
     ) -> None:
-        """build source like components"""
+        """Build source like components"""
         data: ZmfRequest = {"package": package}
         data.update(jobcard(self.__user, "build"))
         if procedure is not None:
@@ -96,7 +118,7 @@ class ChangemanZmf:
     def build_config(
         self, package: str, components: Iterable[str], config_file: str
     ) -> None:
-        """build source like components"""
+        """Build source like components with build configuration"""
         allconfigs = read_config(config_file)
         data = {"package": package}
         data.update(jobcard(self.__user, "build"))
@@ -124,7 +146,7 @@ class ChangemanZmf:
     def promote(
         self, package: str, promSiteName: str, promLevel: int, promName: str
     ) -> None:
-        """promote a package"""
+        """Promote a package"""
         data = {
             "package": package,
             "promotionSiteName": promSiteName,
