@@ -509,7 +509,10 @@ def test_browse_component(zmfapi):
         ZMF_REST_URL + "component/browse",
         body=ZMF_RESP_BROWSE_RICK.encode("iso-8859-1"),
         content_type="text/plain;charset=ISO-8859-1",
-        headers={"Content-Disposition": "attachment;filename=RICK"},
+        headers={
+            "Content-Disposition": "attachment;filename=RICK",
+            "Content-Length": str(len(ZMF_RESP_BROWSE_RICK)),
+        },
         match=[
             responses.urlencoded_params_matcher(
                 {
