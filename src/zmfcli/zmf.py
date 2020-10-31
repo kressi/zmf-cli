@@ -98,11 +98,7 @@ class ChangemanZmf:
     ) -> None:
         """build source like components"""
         allconfigs = read_config(config_file)
-        data = {
-            "package": package,
-            "buildProc": "CMNCOB2",
-            "language": "COBOL",
-        }
+        data = {"package": package}
         data.update(jobcard(self.__user, "build"))
         for comp in components:
             dt = data.copy()
@@ -114,12 +110,11 @@ class ChangemanZmf:
             self.__session.result_put("component/build", data=dt)
 
     def scratch(self, package: str, components: Iterable[str]) -> None:
-        data = {"package": package}
         for comp in components:
-            dt = data.copy()
-            dt["componentType"] = extension(comp).upper()
-            dt["oldComponent"] = Path(comp).stem
-            self.__session.result_put("component/scratch", data=dt)
+            data = {"package": package}
+            data["componentType"] = extension(comp).upper()
+            data["oldComponent"] = Path(comp).stem
+            self.__session.result_put("component/scratch", data=data)
 
     def audit(self, package: str) -> None:
         data = {"package": package}
