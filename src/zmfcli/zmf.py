@@ -43,7 +43,7 @@ class ChangemanZmf:
         revert                PUT package/revert
         search_package        GET package/search
         create_package        POST package
-        get_package           Search and create if package does not exist
+        get_package           Search or create if package does not exist
         get_components        GET component
         get_load_components   GET component/load
         browse_component      GET component/browse

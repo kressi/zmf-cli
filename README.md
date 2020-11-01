@@ -65,7 +65,7 @@ $ zmf promote --help
 | revert               | PUT package/revert                          |
 | search-package       | GET package/search                          |
 | create-package       | POST package                                |
-| get-package          | Search and create if package does not exist |
+| get-package          | Search or create if package does not exist  |
 | get-components       | GET component                               |
 | get-load-components  | GET component/load                          |
 | browse-component     | GET component/browse                        |
