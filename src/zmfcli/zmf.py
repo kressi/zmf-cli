@@ -14,6 +14,21 @@ from .logrequests import debug_requests_on
 from .session import RequestNok, ZmfRequest, ZmfRestNok, ZmfResult, ZmfSession
 
 SRC_DIR = "src/"
+COMP_STATUS = {
+    "Active": "0",
+    "Approved": "1",
+    "Checkout": "2",
+    "Demoted": "3",
+    "Frozen": "4",
+    "Inactive": "5",
+    "Incomplete": "6",
+    "Promoted": "7",
+    "Refrozen": "8",
+    "Rejected": "9",
+    "Remote promoted": "A",
+    "Submitted for approval": "B",
+    "Unfrozen": "C",
+}
 SOURCE_LOCATION = {
     "development dataset": 1,
     "package": 5,
@@ -154,7 +169,7 @@ class ChangemanZmf:
             "promotionLevel": promLevel,
             "promotionName": promName,
         }
-        data.update(jobcard(self.__user, "promote"))
+        data.update(jobcard_s(self.__user, "promote"))
         self.__session.result_put("package/promote", data=data)
 
     def freeze(self, package: str) -> None:
@@ -232,12 +247,24 @@ class ChangemanZmf:
         package: str,
         componentType: Optional[str] = None,
         component: Optional[str] = None,
+        targetComponent: Optional[str] = None,
+        filterActive: Optional[bool] = None,
+        filterIncomplete: Optional[bool] = None,
+        filterInactive: Optional[bool] = None,
     ) -> Optional[ZmfResult]:
         data = {"package": package}
         if componentType is not None:
             data["componentType"] = componentType
         if component is not None:
             data["component"] = component
+        if targetComponent is not None:
+            data["targetComponent"] = targetComponent
+        if filterActive is not None:
+            data["filterActiveStatus"] = to_yes_no(filterActive)
+        if filterIncomplete is not None:
+            data["filterIncompleteStatus"] = to_yes_no(filterIncomplete)
+        if filterInactive is not None:
+            data["filterInactiveStatus"] = to_yes_no(filterInactive)
         return self.__session.result_get("component", data=data)
 
     def get_load_components(
@@ -258,6 +285,22 @@ class ChangemanZmf:
         if targetComponent is not None:
             data["targetComponent"] = targetComponent
         return self.__session.result_get("component/load", data=data)
+
+    def get_package_list(
+        self,
+        package: str,
+        componentType: Optional[str] = None,
+        component: Optional[str] = None,
+        targetComponent: Optional[str] = None,
+    ) -> Optional[ZmfResult]:
+        data = {"package": package}
+        if componentType is not None:
+            data["sourceComponentType"] = componentType
+        if component is not None:
+            data["sourceComponent"] = component
+        if targetComponent is not None:
+            data["targetComponent"] = targetComponent
+        return self.__session.result_get("component/packagelist", data=data)
 
     def browse_component(
         self, package: str, component: str, componentType: str
@@ -298,6 +341,15 @@ def jobcard(user: str, action: str = "@") -> Dict[str, str]:
         "jobCard02": "//         CLASS=A,MSGCLASS=A,",
         "jobCard03": "//         NOTIFY=&SYSUID",
         "jobCard04": "//*",
+    }
+
+
+def jobcard_s(user: str, action: str = "@") -> Dict[str, str]:
+    return {
+        "jobCards01": "//" + user + action[:1].upper() + " JOB 0,'CHANGEMAN',",
+        "jobCards02": "//         CLASS=A,MSGCLASS=A,",
+        "jobCards03": "//         NOTIFY=&SYSUID",
+        "jobCards04": "//*",
     }
 
 
