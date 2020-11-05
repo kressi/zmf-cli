@@ -61,6 +61,7 @@ class ChangemanZmf:
         get_package           Search or create if package does not exist
         get_components        GET component
         get_load_components   GET component/load
+        get_package_list      GET component/packagelist
         browse_component      GET component/browse
 
     Get help for commands with
@@ -177,7 +178,7 @@ class ChangemanZmf:
         data.update(jobcard(self.__user, "freeze"))
         self.__session.result_put("package/freeze", data=data)
 
-    def revert(self, package: str, revertReason: Optional[str]) -> None:
+    def revert(self, package: str, revertReason: Optional[str] = None) -> None:
         data = {"package": package}
         data.update(jobcard(self.__user, "revert"))
         if revertReason is not None:
