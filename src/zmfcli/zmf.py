@@ -177,7 +177,9 @@ class ChangemanZmf:
         data.update(jobcard(self.__user, "freeze"))
         self.__session.result_put("package/freeze", data=data)
 
-    def revert(self, package: str, revertReason: Optional[str]) -> None:
+    def revert(
+        self, package: str, revertReason: Optional[str] = None
+    ) -> None:
         data = {"package": package}
         data.update(jobcard(self.__user, "revert"))
         if revertReason is not None:
