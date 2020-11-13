@@ -106,6 +106,14 @@ class ChangemanZmf:
             dt["targetComponent"] = [Path(c).stem for c in comps]
             self.__session.result_put("component/checkin", data=dt)
 
+    def delete(self, package: str, component: str, componentType: str) -> None:
+        data = {
+            "package": package,
+            "targetComponent": component,
+            "componentType": componentType,
+        }
+        self.__session.result_delete("component", data=data)
+
     def build(
         self,
         package: str,

@@ -77,6 +77,10 @@ class ZmfSession(LoggedSession):
     def result_put(self, *args: Any, **kwargs: Any) -> Response:
         return super().put(*args, **kwargs)
 
+    @unpack_result
+    def result_delete(self, *args: Any, **kwargs: Any) -> Response:
+        return super().delete(*args, **kwargs)
+
 
 class RequestNok(Exception):
     pass

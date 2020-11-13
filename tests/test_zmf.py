@@ -86,6 +86,12 @@ ZMF_RESP_CREATE_000009 = {
     ],
 }
 
+ZMF_RESP_DELETE_OK = {
+    "returnCode": "00",
+    "message": "CMN8270I - Component APPE0001.SRE has been deleted.",
+    "reasonCode": "8270",
+}
+
 ZMF_RESP_FREEZE_ERR = {
     "returnCode": "08",
     "message": "CMN3025A - Package must be audited when audit level is greater than 0.",  # noqa: E501
@@ -190,6 +196,16 @@ def test_checkin(zmfapi):
     with pytest.raises(RequestNok) as excinfo:
         zmfapi.checkin("APP 000000", "U000000.LIB", COMPONENTS)
     assert str(requests.codes.bad_request) in str(excinfo.value)
+
+
+@responses.activate
+def test_delete(zmfapi):
+    responses.add(
+        responses.DELETE,
+        ZMF_REST_URL + "component",
+        json=ZMF_RESP_DELETE_OK,
+    )
+    assert zmfapi.delete("APP 000000", "APPE0001", "SRE") is None
 
 
 @responses.activate
