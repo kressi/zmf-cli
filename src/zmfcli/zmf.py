@@ -11,7 +11,13 @@ import toml
 import yaml
 
 from .logrequests import debug_requests_on
-from .session import RequestNok, ZmfRequest, ZmfRestNok, ZmfResult, ZmfSession
+from .session import (
+    exit_nok,
+    ZmfRequest,
+    ZmfResult,
+    ZmfSession,
+    EXIT_CODE_ZMF_NOK,
+)
 
 SRC_DIR = "src/"
 COMP_STATUS = {
@@ -323,8 +329,7 @@ class ChangemanZmf:
             "componentType": componentType,
         }
         resp = self.__session.get("component/browse", data=data)
-        if not resp.ok:
-            raise RequestNok(resp.status_code)
+        exit_nok(resp, logger=self.logger)
         self.logger.info(
             {
                 k: resp.headers.get(k)
@@ -338,7 +343,8 @@ class ChangemanZmf:
         elif tp.startswith("text/plain") and disp.startswith("attachment"):
             result = resp.text
         else:
-            raise ZmfRestNok()
+            self.logger.error("Unexpected content-type '{}'".format(tp))
+            sys.exit(EXIT_CODE_ZMF_NOK)
         return result
 
 

@@ -1,10 +1,13 @@
 import logging
+import sys
 
 from typing import Any, Callable, Dict, List, Optional, TypedDict, Union
 from urllib.parse import urljoin
 
 from requests import Response, Session
 
+EXIT_CODE_REQUEST_NOK = 2
+EXIT_CODE_ZMF_NOK = 3
 ZMF_STATUS_OK = "00"
 ZMF_STATUS_INFO = "04"
 ZMF_STATUS_FAILURE = "08"
@@ -49,7 +52,8 @@ def unpack_result(
         self: LoggedSession, *args: Any, **kwargs: Any
     ) -> Optional[ZmfResult]:
         resp = req(self, *args, **kwargs)
-        check_json(resp)
+        exit_nok(resp, self.logger)
+        exit_not_json(resp, self.logger)
         payload: ZmfResponse = resp.json()
         self.logger.info(
             {
@@ -58,7 +62,8 @@ def unpack_result(
             }
         )
         if payload.get("returnCode") not in [ZMF_STATUS_OK, ZMF_STATUS_INFO]:
-            raise ZmfRestNok(payload.get("message"))
+            self.logger.error(payload.get("message"))
+            sys.exit(EXIT_CODE_ZMF_NOK)
         return payload.get("result")
 
     return wrapper
@@ -82,17 +87,19 @@ class ZmfSession(LoggedSession):
         return super().delete(*args, **kwargs)
 
 
-class RequestNok(Exception):
-    pass
-
-
-class ZmfRestNok(Exception):
-    pass
-
-
-def check_json(r: Response) -> None:
-    if not r.ok:
-        raise RequestNok(r.status_code)
+def exit_not_json(r: Response, logger: logging.Logger) -> None:
     t = r.headers.get("content-type", "")
     if not t.startswith("application/json"):
-        raise RequestNok("Expected content-type 'application/json'", t)
+        logger.error(
+            ("Expected content-type 'application/json' " "actual '{}'").format(
+                t
+            )
+        )
+        sys.exit(EXIT_CODE_ZMF_NOK)
+
+
+def exit_nok(r: Response, logger: logging.Logger) -> None:
+    if not r.ok:
+        logger.info(r.text)
+        logger.error("{} {}".format(r.status_code, r.reason))
+        sys.exit(EXIT_CODE_REQUEST_NOK)

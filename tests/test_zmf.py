@@ -6,7 +6,7 @@ import toml
 import yaml
 
 from zmfcli.zmf import ChangemanZmf
-from zmfcli.session import RequestNok, ZmfRestNok
+from zmfcli.session import EXIT_CODE_REQUEST_NOK, EXIT_CODE_ZMF_NOK
 
 
 ZMF_REST_URL = "http://example.com:8080/zmfrest/"
@@ -193,9 +193,9 @@ def test_checkin(zmfapi):
         ZMF_REST_URL + "component/checkin",
         status=requests.codes.bad_request,
     )
-    with pytest.raises(RequestNok) as excinfo:
+    with pytest.raises(SystemExit) as excinfo:
         zmfapi.checkin("APP 000000", "U000000.LIB", COMPONENTS)
-    assert str(requests.codes.bad_request) in str(excinfo.value)
+    assert excinfo.value.code == EXIT_CODE_REQUEST_NOK
 
 
 @responses.activate
@@ -228,9 +228,9 @@ def test_build(zmfapi):
         ZMF_REST_URL + "component/build",
         json=data_no_info,
     )
-    with pytest.raises(ZmfRestNok) as excinfo:
+    with pytest.raises(SystemExit) as excinfo:
         zmfapi.build("APP 000000", COMPONENTS)
-    assert "CMN6504I" in str(excinfo.value)
+    assert excinfo.value.code == EXIT_CODE_ZMF_NOK
     data_no_comp = {
         "returnCode": "08",
         "message": "CMN8464I - exist.sre is not a component within the package",  # noqa: E501
@@ -242,9 +242,9 @@ def test_build(zmfapi):
         ZMF_REST_URL + "component/build",
         json=data_no_comp,
     )
-    with pytest.raises(ZmfRestNok) as excinfo:
+    with pytest.raises(SystemExit) as excinfo:
         zmfapi.build("APP 000000", ["file/does/not/exist.sre"])
-    assert "CMN8464I" in str(excinfo.value)
+    assert excinfo.value.code == EXIT_CODE_ZMF_NOK
 
 
 @responses.activate
