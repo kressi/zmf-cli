@@ -1,6 +1,6 @@
 # zmfcli
 
-![Python package](https://github.com/kressi/zmf-cli/workflows/Python%20package/badge.svg))
+![build](https://github.com/kressi/zmf-cli/workflows/Python%20package/badge.svg)
 [![PyPi Version](https://img.shields.io/pypi/v/zmfcli.svg)](https://pypi.python.org/pypi/zmfcli)
 [![Maintainability](https://api.codeclimate.com/v1/badges/d2ded62d131d2b832d9b/maintainability)](https://codeclimate.com/github/kressi/zmf-cli/maintainability)
 [![codecov](https://codecov.io/gh/kressi/zmf-cli/branch/main/graph/badge.svg?token=ZDHD04MJDR)](https://codecov.io/gh/kressi/zmf-cli)
