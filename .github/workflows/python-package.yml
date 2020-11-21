@@ -48,13 +48,13 @@ jobs:
         python -m build .
         twine check dist/*
     - name: Upload test
-      if: ${{ ! startsWith(github.head_ref, 'main') }}
+      if: github.ref != 'refs/heads/main'
       env:
         TWINE_USERNAME: "__token__"
         TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN_TEST }}
       run: twine upload --skip-existing --repository testpypi dist/*
     - name: Upload prod
-      if: ${{ startsWith(github.head_ref, 'main') }}
+      if: github.ref == 'refs/heads/main'
       env:
         TWINE_USERNAME: "__token__"
         TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
