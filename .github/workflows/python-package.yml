@@ -51,13 +51,13 @@ jobs:
         twine check dist/*
         echo $IS_PROD
     - name: Upload test
-      if: $IS_PROD != true
+      if: env.IS_PROD != true
       env:
         TWINE_USERNAME: "__token__"
         TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN_TEST }}
       run: twine upload --skip-existing --repository testpypi dist/*
     - name: Upload prod
-      if: $IS_PROD
+      if: env.IS_PROD
       env:
         TWINE_USERNAME: "__token__"
         TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
