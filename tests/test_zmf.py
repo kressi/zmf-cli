@@ -180,7 +180,7 @@ def zmfapi():
 
 
 @responses.activate
-def test_checkin(zmfapi):
+def test_checkin(zmfapi, caplog):
     responses.add(
         responses.PUT,
         ZMF_REST_URL + "component/checkin",
@@ -196,6 +196,7 @@ def test_checkin(zmfapi):
     with pytest.raises(SystemExit) as excinfo:
         zmfapi.checkin("APP 000000", "U000000.LIB", COMPONENTS)
     assert excinfo.value.code == EXIT_CODE_REQUEST_NOK
+    assert "400 Bad Request" in caplog.text
 
 
 @responses.activate
@@ -209,7 +210,7 @@ def test_delete(zmfapi):
 
 
 @responses.activate
-def test_build(zmfapi):
+def test_build(zmfapi, caplog):
     responses.add(
         responses.PUT,
         ZMF_REST_URL + "component/build",
@@ -231,6 +232,7 @@ def test_build(zmfapi):
     with pytest.raises(SystemExit) as excinfo:
         zmfapi.build("APP 000000", COMPONENTS)
     assert excinfo.value.code == EXIT_CODE_ZMF_NOK
+    assert "CMN6504I" in caplog.text
     data_no_comp = {
         "returnCode": "08",
         "message": "CMN8464I - exist.sre is not a component within the package",  # noqa: E501
@@ -245,6 +247,7 @@ def test_build(zmfapi):
     with pytest.raises(SystemExit) as excinfo:
         zmfapi.build("APP 000000", ["file/does/not/exist.sre"])
     assert excinfo.value.code == EXIT_CODE_ZMF_NOK
+    assert "CMN8464I" in caplog.text
 
 
 @responses.activate
