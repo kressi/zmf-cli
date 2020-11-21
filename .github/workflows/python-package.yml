@@ -4,12 +4,10 @@ on: [push, pull_request]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ["3.8", "3.9"]
-
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
@@ -48,13 +46,13 @@ jobs:
         python -m build .
         twine check dist/*
     - name: Upload test
-      if: ${{ ! startsWith(github.head_ref, $default-branch) }}
+      if: ${{ ! startsWith(github.head_ref, 'main') }}
       env:
         TWINE_USERNAME: "__token__"
         TWINE_PASSWORD: "${secrets.PYPI_TOKEN_TEST}"
       run: twine upload --skip-existing --repository testpypi dist/*
     - name: Upload prod
-      if: ${{ startsWith(github.head_ref, $default-branch) }}
+      if: ${{ startsWith(github.head_ref, 'main') }}
       env:
         TWINE_USERNAME: "__token__"
         TWINE_PASSWORD: "${secrets.PYPI_TOKEN}"
