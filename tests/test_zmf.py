@@ -30,6 +30,12 @@ ZMF_RESP_XXXX_INFO = {
     "reasonCode": "XXXX",
 }
 
+ZMF_RESP_ERR_NO_INFO = {
+    "returnCode": "08",
+    "message": "CMN6504I - No information found for this request.",
+    "reasonCode": "6504",
+}
+
 ZMF_RESP_AUDIT_OK = {
     "returnCode": "00",
     "message": "CMN2600I - The job to audit this package has been submitted.",
@@ -218,16 +224,11 @@ def test_build(zmfapi, caplog):
     )
     assert zmfapi.build("APP 000000", COMPONENTS) is None
     assert zmfapi.build("APP 000000", COMPONENTS, db2Precompile=True) is None
-    data_no_info = {  # lowercase componentType
-        "returnCode": "08",
-        "message": "CMN6504I - No information found for this request.",
-        "reasonCode": "6504",
-    }
     responses.reset()
     responses.add(
         responses.PUT,
         ZMF_REST_URL + "component/build",
-        json=data_no_info,
+        json=ZMF_RESP_ERR_NO_INFO,
     )
     with pytest.raises(SystemExit) as excinfo:
         zmfapi.build("APP 000000", COMPONENTS)
@@ -380,7 +381,7 @@ def test_promote(zmfapi):
 
 
 @responses.activate
-def test_search_package(zmfapi):
+def test_search_package(zmfapi, caplog):
     responses.add(
         responses.GET,
         ZMF_REST_URL + "package/search",
@@ -391,7 +392,21 @@ def test_search_package(zmfapi):
             ),
         ],
     )
+    responses.add(
+        responses.GET,
+        ZMF_REST_URL + "package/search",
+        json=ZMF_RESP_ERR_NO_INFO,
+        match=[
+            responses.urlencoded_params_matcher(
+                {"package": "APP*", "packageTitle": "not exist package"}
+            ),
+        ],
+    )
     assert zmfapi.search_package("APP", "fancy package title") == "APP 000007"
+    with pytest.raises(SystemExit) as excinfo:
+        zmfapi.search_package("APP", "not exist package")
+    assert excinfo.value.code == EXIT_CODE_ZMF_NOK
+    assert "CMN6504I" in caplog.text
 
 
 PKG_CONF_YAML_INCL_ID = {
@@ -451,7 +466,7 @@ def test_get_package(zmfapi, tmp_path):
     responses.add(
         responses.GET,
         ZMF_REST_URL + "package/search",
-        json=ZMF_RESP_XXXX_INFO,
+        json=ZMF_RESP_ERR_NO_INFO,
         match=[
             responses.urlencoded_params_matcher(
                 {"package": "APP*", "packageTitle": "fancy package title"}

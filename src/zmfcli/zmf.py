@@ -252,9 +252,13 @@ class ChangemanZmf:
             search_app = config.get("applName", app)
             search_title = config.get("packageTitle", title)
             search_request = config.get("workChangeRequest", workChangeRequest)
-            pkg_id = self.search_package(
-                search_app, search_title, search_request
-            )
+            try:
+                pkg_id = self.search_package(
+                    search_app, search_title, search_request
+                )
+            except SystemExit as e:
+                if e.code != EXIT_CODE_ZMF_NOK:
+                    sys.exit(e.code)
         if not pkg_id:
             pkg_id = self.create_package(config_file, app, title)
         return pkg_id
