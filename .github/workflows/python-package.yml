@@ -50,13 +50,13 @@ jobs:
         python -m build .
         twine check dist/*
     - name: Upload test
-      if: env.UPLOAD_PROD != true
+      if: env.UPLOAD_PROD != 'true'
       env:
         TWINE_USERNAME: "__token__"
         TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN_TEST }}
       run: twine upload --skip-existing --repository testpypi dist/*
     - name: Upload prod
-      if: env.UPLOAD_PROD == true
+      if: env.UPLOAD_PROD == 'true'
       env:
         TWINE_USERNAME: "__token__"
         TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
