@@ -128,10 +128,13 @@ class ChangemanZmf:
         language: Optional[str] = None,
         db2Precompile: Optional[bool] = None,
         useHistory: Optional[bool] = None,
+        params: Optional[Dict[str, str]] = None,
     ) -> None:
         """Build source like components"""
         data: ZmfRequest = {"package": package}
         data.update(jobcard(self.__user, "build"))
+        if params is not None:
+            data.update(params)
         if procedure is not None:
             data["buildProc"] = procedure
         if language is not None:
@@ -225,42 +228,72 @@ class ChangemanZmf:
 
     def create_package(
         self,
-        config_file: Union[str, "os.PathLike[str]"] = "-",
-        app: Optional[str] = None,
-        title: Optional[str] = None,
+        config_file: Union[str, "os.PathLike[str]", None] = None,
+        applName: Optional[str] = None,
+        packageTitle: Optional[str] = None,
+        workChangeRequest: Optional[str] = None,
+        params: Optional[Dict[str, str]] = None,
     ) -> Optional[str]:
-        data = {
-            "applName": app,
-            "packageTitle": title,
-        }
-        config = read_config(config_file)
-        data.update(config)
+        if params is not None:
+            data = params.copy()
+        else:
+            data = {}
+        if applName is not None:
+            data["applName"] = applName
+        if packageTitle is not None:
+            data["packageTitle"] = packageTitle
+        if workChangeRequest is not None:
+            data["workChangeRequest"] = workChangeRequest
+        if config_file is not None:
+            config = read_config(config_file)
+            data.update(config)
         result = self.__session.result_post("package", data=data)
         self.logger.info(result)
         return str_or_none(result[0].get("package")) if result else None
 
     def get_package(
         self,
-        config_file: Union[str, "os.PathLike[str]"] = "-",
-        app: Optional[str] = None,
-        title: Optional[str] = None,
+        config_file: Union[str, "os.PathLike[str]", None] = None,
+        applName: Optional[str] = None,
+        packageTitle: Optional[str] = None,
         workChangeRequest: Optional[str] = None,
+        params: Optional[Dict[str, str]] = None,
     ) -> Optional[str]:
-        config = read_config(config_file)
-        pkg_id = config.get("package")
+        pkg_id = None
+        if params is not None:
+            pkg_id = params.get("package")
+        elif config_file is not None:
+            config = read_config(config_file)
+            pkg_id = config.get("package")
         if not pkg_id:
-            search_app = config.get("applName", app)
-            search_title = config.get("packageTitle", title)
-            search_request = config.get("workChangeRequest", workChangeRequest)
-            try:
-                pkg_id = self.search_package(
-                    search_app, search_title, search_request
+            if params is not None:
+                search_app = params.get("applName", applName)
+                search_title = params.get("packageTitle", packageTitle)
+                search_request = params.get(
+                    "workChangeRequest", workChangeRequest
                 )
-            except SystemExit as e:
-                if e.code != EXIT_CODE_ZMF_NOK:
-                    sys.exit(e.code)
+            elif config_file is not None:
+                search_app = config.get("applName", applName)
+                search_title = config.get("packageTitle", packageTitle)
+                search_request = config.get(
+                    "workChangeRequest", workChangeRequest
+                )
+            else:
+                search_app = applName
+                search_title = packageTitle
+                search_request = workChangeRequest
+            if search_app is not None and search_title is not None:
+                try:
+                    pkg_id = self.search_package(
+                        search_app, search_title, search_request
+                    )
+                except SystemExit as e:
+                    if e.code != EXIT_CODE_ZMF_NOK:
+                        sys.exit(e.code)
         if not pkg_id:
-            pkg_id = self.create_package(config_file, app, title)
+            pkg_id = self.create_package(
+                config_file, applName, packageTitle, workChangeRequest, params
+            )
         return pkg_id
 
     def get_components(
