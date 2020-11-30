@@ -51,7 +51,7 @@ $ zmf promote --help
 ### Pretty print result
 Some results may return JSON data, this data can be pretty printed with Python
 ```bash
-zmf get-load-components "APP 000001" "LST" | python -m json.tools
+zmf get-load-components "APP 000001" "LST" | python -m json.tool
 ```
 
 ## ChangeMan ZMF Documents
