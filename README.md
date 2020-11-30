@@ -21,30 +21,9 @@ zmf build "APP 000001" "['src/SRE/APP00001.sre', 'src/SRB/APP00002.srb', 'src/SR
 ```
 
 ### Example
-Create package from a config
+Audit a package
 ```bash
-cat <<'CONFIG' > pkg-config.toml
-applName = "APP"
-createMethod = "0"
-packageLevel = "1"
-packageType = "1"
-requestorDept = "DEVB"
-requestorName = "DEVA"
-requestorPhone = "01000000"
-workChangeRequest = "APP 000000"
-packageTitle = "DEV release/2021-12-31"
-packageDesc = "created with ZMF Rest API"
-siteName = "ZPLEX0"
-installDate = "20211231"
-fromInstallTime = "0000"
-toInstallTime = "2359"
-contactName = "Timothy Leary"
-contactPhone = "01000000"
-alternateContactName = "Terrence McKenna"
-alternateContactPhone = "01000000"
-CONFIG
-
-$ zmf create-package pkg-config.toml
+$ zmf audit "APP 000001"
 ```
 
 ### Commands
@@ -57,7 +36,6 @@ $ zmf promote --help
 |----------------------|---------------------------------------------|
 | checkin              | PUT component/checkin                       |
 | build                | PUT component/build                         |
-| build-config         | PUT component/build                         |
 | scratch              | PUT component/scratch                       |
 | audit                | PUT package/audit                           |
 | promote              | PUT package/promote                         |

@@ -4,11 +4,9 @@ import sys
 
 from itertools import groupby
 from pathlib import Path
-from typing import Any, Dict, Iterable, MutableMapping, Optional, Union
+from typing import Dict, Iterable, Optional, Union
 
 import fire  # type: ignore
-import toml
-import yaml
 
 from .logrequests import debug_requests_on
 from .session import (
@@ -56,7 +54,6 @@ class ChangemanZmf:
     Available commands:
         checkin               PUT component/checkin
         build                 PUT component/build
-        build_config          PUT component/build
         scratch               PUT component/scratch
         audit                 PUT package/audit
         promote               PUT package/promote
@@ -149,22 +146,6 @@ class ChangemanZmf:
             dt["component"] = [Path(c).stem for c in comps]
             self.__session.result_put("component/build", data=dt)
 
-    def build_config(
-        self, package: str, components: Iterable[str], config_file: str
-    ) -> None:
-        """Build source like components with build configuration"""
-        allconfigs = read_config(config_file)
-        data = {"package": package}
-        data.update(jobcard(self.__user, "build"))
-        for comp in components:
-            dt = data.copy()
-            config = allconfigs.get(removeprefix(comp, SRC_DIR))
-            if config:
-                dt.update(config)
-            dt["componentType"] = extension(comp).upper()
-            dt["component"] = Path(comp).stem
-            self.__session.result_put("component/build", data=dt)
-
     def scratch(self, package: str, components: Iterable[str]) -> None:
         for comp in components:
             data = {"package": package}
@@ -203,11 +184,14 @@ class ChangemanZmf:
         self.__session.result_put("package/revert", data=data)
 
     def search_package(
-        self, app: str, title: str, workChangeRequest: Optional[str] = None
+        self,
+        applName: str,
+        packageTitle: str,
+        workChangeRequest: Optional[str] = None,
     ) -> Optional[str]:
         data = {
-            "package": app + "*",
-            "packageTitle": title,
+            "package": applName + "*",
+            "packageTitle": packageTitle,
         }
         if workChangeRequest is not None:
             data["workChangeRequest"] = workChangeRequest
@@ -221,14 +205,13 @@ class ChangemanZmf:
                 reverse=True,
             ):
                 # search matches title as substring, ensure full title matches
-                if pkg.get("packageTitle") == title:
+                if pkg.get("packageTitle") == packageTitle:
                     pkg_id = pkg.get("package")
                     break
         return str_or_none(pkg_id)
 
     def create_package(
         self,
-        config_file: Union[str, "os.PathLike[str]", None] = None,
         applName: Optional[str] = None,
         packageTitle: Optional[str] = None,
         workChangeRequest: Optional[str] = None,
@@ -244,16 +227,12 @@ class ChangemanZmf:
             data["packageTitle"] = packageTitle
         if workChangeRequest is not None:
             data["workChangeRequest"] = workChangeRequest
-        if config_file is not None:
-            config = read_config(config_file)
-            data.update(config)
         result = self.__session.result_post("package", data=data)
         self.logger.info(result)
         return str_or_none(result[0].get("package")) if result else None
 
     def get_package(
         self,
-        config_file: Union[str, "os.PathLike[str]", None] = None,
         applName: Optional[str] = None,
         packageTitle: Optional[str] = None,
         workChangeRequest: Optional[str] = None,
@@ -262,37 +241,33 @@ class ChangemanZmf:
         pkg_id = None
         if params is not None:
             pkg_id = params.get("package")
-        elif config_file is not None:
-            config = read_config(config_file)
-            pkg_id = config.get("package")
         if not pkg_id:
-            if params is not None:
+            if params is None:
+                search_app = applName
+                search_title = packageTitle
+                search_request = workChangeRequest
+            else:
                 search_app = params.get("applName", applName)
                 search_title = params.get("packageTitle", packageTitle)
                 search_request = params.get(
                     "workChangeRequest", workChangeRequest
                 )
-            elif config_file is not None:
-                search_app = config.get("applName", applName)
-                search_title = config.get("packageTitle", packageTitle)
-                search_request = config.get(
-                    "workChangeRequest", workChangeRequest
-                )
-            else:
-                search_app = applName
-                search_title = packageTitle
-                search_request = workChangeRequest
             if search_app is not None and search_title is not None:
                 try:
                     pkg_id = self.search_package(
-                        search_app, search_title, search_request
+                        applName=search_app,
+                        packageTitle=search_title,
+                        workChangeRequest=search_request,
                     )
                 except SystemExit as e:
                     if e.code != EXIT_CODE_ZMF_NOK:
                         sys.exit(e.code)
         if not pkg_id:
             pkg_id = self.create_package(
-                config_file, applName, packageTitle, workChangeRequest, params
+                applName=applName,
+                packageTitle=packageTitle,
+                workChangeRequest=workChangeRequest,
+                params=params,
             )
         return pkg_id
 
@@ -405,22 +380,6 @@ def jobcard_s(user: str, action: str = "@") -> Dict[str, str]:
         "jobCards03": "//         NOTIFY=&SYSUID",
         "jobCards04": "//*",
     }
-
-
-def read_config(
-    file: Union[str, "os.PathLike[str]"]
-) -> MutableMapping[str, Any]:
-    if isinstance(file, str) and file == "-":
-        fh = sys.stdin
-    else:
-        fh = open(file)
-    if Path(file).suffix == ".toml":
-        data = toml.load(fh)
-    else:
-        data = yaml.safe_load(fh)
-    if fh != sys.stdin:
-        fh.close()
-    return data
 
 
 def removeprefix(self: str, prefix: str) -> str:

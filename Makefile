@@ -27,4 +27,4 @@ install: build
 	python -m pip install dist/*
 
 test:
-	pytest --cov=zmfcli
+	pytest --override-ini log_cli=true --cov-report term-missing --cov zmfcli

@@ -2,8 +2,6 @@ import json
 import pytest
 import requests
 import responses
-import toml
-import yaml
 
 from zmfcli.zmf import ChangemanZmf
 from zmfcli.session import EXIT_CODE_REQUEST_NOK, EXIT_CODE_ZMF_NOK
@@ -252,38 +250,6 @@ def test_build(zmfapi, caplog):
 
 
 @responses.activate
-def test_build_config(zmfapi, tmp_path):
-    responses.add(
-        responses.PUT,
-        ZMF_REST_URL + "component/build",
-        json=ZMF_RESP_BUILD_OK,
-    )
-    file = tmp_path / "test.yml"
-    build_config = {
-        "SRB/APPB0001.srb": {
-            "language": "DELTACOB",
-            "buildproc": "CMNCOB2",
-        },
-        "SRB/APPB0002.srb": {
-            "language": "DELTACOB",
-            "buildproc": "CMNCOB2",
-        },
-        "SRE/APPE0001.sre": {
-            "language": "DELTACOB",
-            "buildproc": "CMNCOB2",
-            "useDb2PreCompileOption": "N",
-        },
-        "SRE/APPE0002.sre": {
-            "language": "DELTACOB",
-            "buildproc": "CMNCOB2",
-            "useDb2PreCompileOption": "N",
-        },
-    }
-    file.write_text(yaml.dump(build_config))
-    assert zmfapi.build_config("APP 000000", COMPONENTS, file) is None
-
-
-@responses.activate
 def test_scratch(zmfapi):
     responses.add(
         responses.PUT,
@@ -409,22 +375,20 @@ def test_search_package(zmfapi, caplog):
     assert "CMN6504I" in caplog.text
 
 
-PKG_CONF_YAML_INCL_ID = {
+PKG_CONF_INCL_ID = {
     "applName": "APP",
     "packageTitle": "fancy package title",
     "package": "APP 000001",
 }
 
-PKG_CONF_YAML_EXCL_ID = {
+PKG_CONF_EXCL_ID = {
     "applName": "APP",
     "packageTitle": "fancy package title",
 }
 
 
 @responses.activate
-def test_create_package(zmfapi, tmp_path):
-    config_file = tmp_path / "test.yml"
-    config_file.write_text(yaml.dump(PKG_CONF_YAML_INCL_ID))
+def test_create_package(zmfapi):
     responses.add(
         responses.POST,
         ZMF_REST_URL + "package",
@@ -439,17 +403,13 @@ def test_create_package(zmfapi, tmp_path):
             ),
         ],
     )
-    assert zmfapi.create_package(config_file) == "APP 000009"
+    assert zmfapi.create_package(params=PKG_CONF_INCL_ID) == "APP 000009"
 
 
 @responses.activate
-def test_get_package(zmfapi, tmp_path):
-    config_incl_id_file = tmp_path / "test.toml"
-    config_incl_id_file.write_text(toml.dumps(PKG_CONF_YAML_INCL_ID))
-    assert zmfapi.get_package(config_incl_id_file) == "APP 000001"
+def test_get_package(zmfapi):
+    assert zmfapi.get_package(params=PKG_CONF_INCL_ID) == "APP 000001"
 
-    config_excl_id_file = tmp_path / "test.yml"
-    config_excl_id_file.write_text(yaml.dump(PKG_CONF_YAML_EXCL_ID))
     responses.add(
         responses.GET,
         ZMF_REST_URL + "package/search",
@@ -460,7 +420,7 @@ def test_get_package(zmfapi, tmp_path):
             ),
         ],
     )
-    assert zmfapi.get_package(config_excl_id_file) == "APP 000007"
+    assert zmfapi.get_package(params=PKG_CONF_EXCL_ID) == "APP 000007"
 
     responses.reset()
     responses.add(
@@ -478,10 +438,10 @@ def test_get_package(zmfapi, tmp_path):
         ZMF_REST_URL + "package",
         json=ZMF_RESP_CREATE_000009,
         match=[
-            responses.urlencoded_params_matcher(PKG_CONF_YAML_EXCL_ID),
+            responses.urlencoded_params_matcher(PKG_CONF_EXCL_ID),
         ],
     )
-    assert zmfapi.get_package(config_excl_id_file) == "APP 000009"
+    assert zmfapi.get_package(params=PKG_CONF_EXCL_ID) == "APP 000009"
 
 
 @responses.activate
@@ -522,6 +482,27 @@ def test_get_load_components(zmfapi):
     )
     assert (
         zmfapi.get_load_components("APP 000001", targetType="LST")
+        == ZMF_RESP_LOAD_COMP_OK["result"]
+    )
+
+
+@responses.activate
+def test_get_package_list(zmfapi):
+    responses.add(
+        responses.GET,
+        ZMF_REST_URL + "component/packagelist",
+        json=ZMF_RESP_LOAD_COMP_OK,
+        match=[
+            responses.urlencoded_params_matcher(
+                {
+                    "package": "APP 000001",
+                    "sourceComponentType": "LST",
+                }
+            ),
+        ],
+    )
+    assert (
+        zmfapi.get_package_list("APP 000001", componentType="LST")
         == ZMF_RESP_LOAD_COMP_OK["result"]
     )
 
