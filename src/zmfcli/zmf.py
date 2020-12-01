@@ -17,7 +17,6 @@ from .session import (
     EXIT_CODE_ZMF_NOK,
 )
 
-SRC_DIR = "src/"
 COMP_STATUS = {
     "Active": "0",
     "Approved": "1",

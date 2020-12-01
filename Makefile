@@ -24,7 +24,7 @@ build:
 	python -m build .
 
 install: build
-	python -m pip install dist/*
+	python -m pip install dist/*.whl
 
 test:
 	pytest --override-ini log_cli=true --cov-report term-missing --cov zmfcli
