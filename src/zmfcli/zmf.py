@@ -158,7 +158,12 @@ class ChangemanZmf:
         self.__session.result_put("package/audit", data=data)
 
     def promote(
-        self, package: str, promSiteName: str, promLevel: int, promName: str
+        self,
+        package: str,
+        promSiteName: str,
+        promLevel: int,
+        promName: str,
+        overlay: Optional[bool] = None,
     ) -> None:
         """Promote a package"""
         data = {
@@ -167,6 +172,8 @@ class ChangemanZmf:
             "promotionLevel": promLevel,
             "promotionName": promName,
         }
+        if overlay is not None:
+            data["overlayTargetComponents"] = to_yes_no(overlay)
         data.update(jobcard_s(self.__user, "promote"))
         self.__session.result_put("package/promote", data=data)
 
