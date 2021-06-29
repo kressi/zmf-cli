@@ -9,7 +9,7 @@ SHELL := /bin/bash
 all: clean lint build install test
 
 init:
-	python -m pip install .[tests]
+	python -m pip install .[test]
 	python -m pip install build
 
 clean:
