@@ -9,7 +9,7 @@ SHELL := /bin/bash
 all: clean lint build install test
 
 init:
-	python -m pip install .[tests]
+	python -m pip install .[test]
 	python -m pip install build
 
 clean:
@@ -24,7 +24,7 @@ build:
 	python -m build .
 
 install: build
-	python -m pip install dist/*.whl
+	python -m pip install --force-reinstall dist/*.whl
 
 test:
 	pytest --override-ini log_cli=true --cov-report term-missing --cov zmfcli

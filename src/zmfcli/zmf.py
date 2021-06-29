@@ -32,6 +32,7 @@ COMP_STATUS = {
     "Submitted for approval": "B",
     "Unfrozen": "C",
 }
+PROCESSING_OPTION = {"delete": 1, "undelete": 2}
 SOURCE_LOCATION = {
     "development dataset": 1,
     "package": 5,
@@ -52,14 +53,17 @@ class ChangemanZmf:
 
     Available commands:
         checkin               PUT component/checkin
+        delete                DELETE component
         build                 PUT component/build
         scratch               PUT component/scratch
         audit                 PUT package/audit
         promote               PUT package/promote
+        demote                PUT package/demote
         freeze                PUT package/freeze
         revert                PUT package/revert
         search_package        GET package/search
         create_package        POST package
+        delete_package        DELETE package
         get_package           Search or create if package does not exist
         get_components        GET component
         get_load_components   GET component/load
@@ -177,6 +181,23 @@ class ChangemanZmf:
         data.update(jobcard_s(self.__user, "promote"))
         self.__session.result_put("package/promote", data=data)
 
+    def demote(
+        self,
+        package: str,
+        promSiteName: str,
+        promLevel: int,
+        promName: str,
+    ) -> None:
+        """Demote a package"""
+        data = {
+            "package": package,
+            "promotionSiteName": promSiteName,
+            "promotionLevel": promLevel,
+            "promotionName": promName,
+        }
+        data.update(jobcard_s(self.__user, "demote"))
+        self.__session.result_put("package/demote", data=data)
+
     def freeze(self, package: str) -> None:
         data = {"package": package}
         data.update(jobcard(self.__user, "freeze"))
@@ -236,6 +257,17 @@ class ChangemanZmf:
         result = self.__session.result_post("package", data=data)
         self.logger.info(result)
         return str_or_none(result[0].get("package")) if result else None
+
+    def delete_package(
+        self,
+        package: str,
+    ) -> None:
+        """Demote a package"""
+        data = {
+            "package": package,
+            "processingOption": PROCESSING_OPTION["delete"],
+        }
+        self.__session.result_delete("package", data=data)
 
     def get_package(
         self,
