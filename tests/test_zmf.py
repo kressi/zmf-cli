@@ -347,6 +347,30 @@ def test_promote(zmfapi):
 
 
 @responses.activate
+def test_demote(zmfapi):
+    responses.add(
+        responses.PUT,
+        ZMF_REST_URL + "package/demote",
+        json=ZMF_RESP_XXXX_OK,
+        match=[
+            responses.urlencoded_params_matcher(
+                {
+                    "package": "APP 000000",
+                    "promotionSiteName": "DEV0",
+                    "promotionLevel": "42",
+                    "promotionName": "ALL",
+                    "jobCards01": "//U000000D JOB 0,'CHANGEMAN',",
+                    "jobCards02": "//         CLASS=A,MSGCLASS=A,",
+                    "jobCards03": "//         NOTIFY=&SYSUID",
+                    "jobCards04": "//*",
+                }
+            ),
+        ],
+    )
+    assert zmfapi.demote("APP 000000", "DEV0", 42, "ALL") is None
+
+
+@responses.activate
 def test_search_package(zmfapi, caplog):
     responses.add(
         responses.GET,
@@ -404,6 +428,24 @@ def test_create_package(zmfapi):
         ],
     )
     assert zmfapi.create_package(params=PKG_CONF_INCL_ID) == "APP 000009"
+
+
+@responses.activate
+def test_delete_package(zmfapi):
+    responses.add(
+        responses.DELETE,
+        ZMF_REST_URL + "package",
+        json=ZMF_RESP_XXXX_OK,
+        match=[
+            responses.urlencoded_params_matcher(
+                {
+                    "package": "APP 000000",
+                    "processingOption": "1",
+                }
+            ),
+        ],
+    )
+    assert zmfapi.delete_package("APP 000000") is None
 
 
 @responses.activate

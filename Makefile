@@ -24,7 +24,7 @@ build:
 	python -m build .
 
 install: build
-	python -m pip install dist/*.whl
+	python -m pip install --force-reinstall dist/*.whl
 
 test:
 	pytest --override-ini log_cli=true --cov-report term-missing --cov zmfcli
