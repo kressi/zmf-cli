@@ -33,13 +33,18 @@ COMP_STATUS = {
     "Unfrozen": "C",
 }
 PROCESSING_OPTION = {"delete": 1, "undelete": 2}
-SOURCE_LOCATION = {
+REQUEST_TYPE = {
+    "full promotion history": 1,
+    "current status per site": 2,
+    "full, including lock records": 3,
+}
+SOURCE_LOCATION: Dict[str, Union[str, int]] = {
     "development dataset": 1,
     "package": 5,
     "temp sequential dataset": 7,
     "edit from package lib": "E",
 }
-SOURCE_STORAGE = {
+SOURCE_STORAGE: Dict[str, Union[str, int]] = {
     "pds": 6,
     "sequential dataset": 8,
     "pds/extended": 9,
@@ -96,29 +101,56 @@ class ChangemanZmf:
         else:
             logging.getLogger().setLevel(logging.INFO)
 
+    def _get(
+        self, path_name: str, **params: Union[int, str, bool, Iterable[str]]
+    ) -> Optional[ZmfResult]:
+        return self.__session.result_get(
+            to_path(path_name), data=prepare_bools(params)
+        )
+
+    def _post(
+        self, path_name: str, **params: Union[int, str, bool, Iterable[str]]
+    ) -> Optional[ZmfResult]:
+        return self.__session.result_post(
+            to_path(path_name), data=prepare_bools(params)
+        )
+
+    def _put(
+        self, path_name: str, **params: Union[int, str, bool, Iterable[str]]
+    ) -> Optional[ZmfResult]:
+        return self.__session.result_put(
+            to_path(path_name), data=prepare_bools(params)
+        )
+
+    def _delete(
+        self, path_name: str, **params: Union[int, str, bool, Iterable[str]]
+    ) -> Optional[ZmfResult]:
+        return self.__session.result_delete(
+            to_path(path_name), data=prepare_bools(params)
+        )
+
     def checkin(
         self, package: str, pds: str, components: Iterable[str]
     ) -> None:
         """Checkin components to Changeman from a partitioned dataset (PDS)"""
-        data = {
-            "package": package,
-            "chkInSourceLocation": SOURCE_LOCATION["development dataset"],
-            "sourceStorageMeans": SOURCE_STORAGE["pds"],
-        }
         for tp, comps in groupby(sorted(components, key=extension), extension):
-            dt = data.copy()
-            dt["componentType"] = tp.upper()
-            dt["sourceLib"] = pds + "." + tp.upper()
-            dt["targetComponent"] = [Path(c).stem for c in comps]
-            self.__session.result_put("component/checkin", data=dt)
+            self._put(
+                "component_checkin",
+                package=package,
+                chkInSourceLocation=SOURCE_LOCATION["development dataset"],
+                sourceStorageMeans=SOURCE_STORAGE["pds"],
+                componentType=tp.upper(),
+                sourceLib=pds + "." + tp.upper(),
+                targetComponent=[Path(c).stem for c in comps],
+            )
 
     def delete(self, package: str, component: str, componentType: str) -> None:
-        data = {
-            "package": package,
-            "targetComponent": component,
-            "componentType": componentType,
-        }
-        self.__session.result_delete("component", data=data)
+        self._delete(
+            "component",
+            package=package,
+            targetComponent=component,
+            componentType=componentType,
+        )
 
     def build(
         self,
@@ -131,8 +163,8 @@ class ChangemanZmf:
         params: Optional[Dict[str, str]] = None,
     ) -> None:
         """Build source like components"""
-        data: ZmfRequest = {"package": package}
-        data.update(jobcard(self.__user, "build"))
+        jobcard_dict = jobcard(self.__user, "build")
+        data: ZmfRequest = {}
         if params is not None:
             data.update(params)
         if procedure is not None:
@@ -144,22 +176,27 @@ class ChangemanZmf:
         if useHistory is not None:
             data["useHistory"] = to_yes_no(useHistory)
         for t, comps in groupby(sorted(components, key=extension), extension):
-            dt = data.copy()
-            dt["componentType"] = t.upper()
-            dt["component"] = [Path(c).stem for c in comps]
-            self.__session.result_put("component/build", data=dt)
+            self._put(
+                "component_build",
+                package=package,
+                componentType=t.upper(),
+                component=[Path(c).stem for c in comps],
+                **jobcard_dict,
+                **data,
+            )
 
     def scratch(self, package: str, components: Iterable[str]) -> None:
         for comp in components:
-            data = {"package": package}
-            data["componentType"] = extension(comp).upper()
-            data["oldComponent"] = Path(comp).stem
-            self.__session.result_put("component/scratch", data=data)
+            self._put(
+                "component_scratch",
+                package=package,
+                componentType=extension(comp).upper(),
+                oldComponent=Path(comp).stem,
+            )
 
     def audit(self, package: str) -> None:
-        data = {"package": package}
-        data.update(jobcard(self.__user, "audit"))
-        self.__session.result_put("package/audit", data=data)
+        jobcard_dict = jobcard(self.__user, "audit")
+        self._put("package_audit", package=package, **jobcard_dict)
 
     def promote(
         self,
@@ -170,16 +207,19 @@ class ChangemanZmf:
         overlay: Optional[bool] = None,
     ) -> None:
         """Promote a package"""
-        data = {
-            "package": package,
-            "promotionSiteName": promSiteName,
-            "promotionLevel": promLevel,
-            "promotionName": promName,
-        }
+        data = {}
         if overlay is not None:
             data["overlayTargetComponents"] = to_yes_no(overlay)
-        data.update(jobcard_s(self.__user, "promote"))
-        self.__session.result_put("package/promote", data=data)
+        jobcard_dict = jobcard_s(self.__user, "promote")
+        self._put(
+            "package/promote",
+            package=package,
+            promotionSiteName=promSiteName,
+            promotionLevel=promLevel,
+            promotionName=promName,
+            **data,
+            **jobcard_dict,
+        )
 
     def demote(
         self,
@@ -189,26 +229,26 @@ class ChangemanZmf:
         promName: str,
     ) -> None:
         """Demote a package"""
-        data = {
-            "package": package,
-            "promotionSiteName": promSiteName,
-            "promotionLevel": promLevel,
-            "promotionName": promName,
-        }
-        data.update(jobcard_s(self.__user, "demote"))
-        self.__session.result_put("package/demote", data=data)
+        jobcard_dict = jobcard_s(self.__user, "demote")
+        self._put(
+            "package/demote",
+            package=package,
+            promotionSiteName=promSiteName,
+            promotionLevel=promLevel,
+            promotionName=promName,
+            **jobcard_dict,
+        )
 
     def freeze(self, package: str) -> None:
-        data = {"package": package}
-        data.update(jobcard(self.__user, "freeze"))
-        self.__session.result_put("package/freeze", data=data)
+        jobcard_dict = jobcard(self.__user, "freeze")
+        self._put("package/freeze", package=package, **jobcard_dict)
 
     def revert(self, package: str, revertReason: Optional[str] = None) -> None:
-        data = {"package": package}
-        data.update(jobcard(self.__user, "revert"))
+        data = {}
         if revertReason is not None:
             data["revertReason01"] = revertReason
-        self.__session.result_put("package/revert", data=data)
+        jobcard_dict = jobcard(self.__user, "revert")
+        self._put("package/revert", package=package, **data, **jobcard_dict)
 
     def search_package(
         self,
@@ -216,13 +256,15 @@ class ChangemanZmf:
         packageTitle: str,
         workChangeRequest: Optional[str] = None,
     ) -> Optional[str]:
-        data = {
-            "package": applName + "*",
-            "packageTitle": packageTitle,
-        }
+        data = {}
         if workChangeRequest is not None:
             data["workChangeRequest"] = workChangeRequest
-        result = self.__session.result_get("package/search", data=data)
+        result = self._get(
+            "package_search",
+            package=applName + "*",
+            packageTitle=packageTitle,
+            **data,
+        )
         pkg_id = None
         # in case multiple packages have been found take the youngest
         if result:
@@ -262,7 +304,6 @@ class ChangemanZmf:
         self,
         package: str,
     ) -> None:
-        """Demote a package"""
         data = {
             "package": package,
             "processingOption": PROCESSING_OPTION["delete"],
@@ -396,6 +437,19 @@ class ChangemanZmf:
             self.logger.error("Unexpected content-type '{}'".format(tp))
             sys.exit(EXIT_CODE_ZMF_NOK)
         return result
+
+
+def to_path(name: str) -> str:
+    return name.replace("__", "-").replace("_", "/")
+
+
+def prepare_bools(
+    params: Dict[str, Union[str, int, bool, Iterable[str]]]
+) -> Dict[str, Union[str, int, Iterable[str]]]:
+    return {
+        key: to_yes_no(value) if type(value) is bool else value
+        for key, value in params.items()
+    }
 
 
 def extension(file: str) -> str:
