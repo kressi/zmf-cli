@@ -4,6 +4,9 @@
 import pytest
 
 from zmfcli.zmf import (
+    to_path,
+    prepare_bools,
+    chunks,
     extension,
     int_or_zero,
     jobcard,
@@ -11,6 +14,37 @@ from zmfcli.zmf import (
     removeprefix,
     str_or_none,
 )
+
+
+def test_to_path():
+    assert to_path("aoeu__1234_AOEU__4321_ueoa") == "aoeu-1234/AOEU-4321/ueoa"
+
+
+@pytest.mark.parametrize(
+    "params, expected",
+    [
+        ({}, {}),
+        (
+            {"a": 1, "b": 0, "c": True, "d": False},
+            {"a": 1, "b": 0, "c": "Y", "d": "N"},
+        ),
+    ],
+)
+def test_prepare_bools(params, expected):
+    assert prepare_bools(params) == expected
+
+
+@pytest.mark.parametrize(
+    "it, n, expected",
+    [
+        ([], 1, []),
+        (["1", "2", "3"], 2, [["1", "2"], ["3"]]),
+        (["1", "2", "3"], 3, [["1", "2", "3"]]),
+        (["1", "2", "3"], 5, [["1", "2", "3"]]),
+    ],
+)
+def test_chunks(it, n, expected):
+    assert all(x0 == x1 for x0, x1 in zip(chunks(it, n), expected))
 
 
 @pytest.mark.parametrize(

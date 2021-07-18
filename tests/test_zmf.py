@@ -204,6 +204,23 @@ def test_checkin(zmfapi, caplog):
 
 
 @responses.activate
+def test_checkin_chunks(zmfapi, caplog):
+    responses.add(
+        responses.PUT,
+        ZMF_REST_URL + "component/checkin",
+        json=ZMF_RESP_XXXX_OK,
+    )
+    assert (
+        zmfapi.checkin(
+            "APP 000000",
+            "U000000.LIB",
+            ["src/PGM{:02d}.cpy".format(i) for i in range(65)],
+        )
+        is None
+    )
+
+
+@responses.activate
 def test_delete(zmfapi):
     responses.add(
         responses.DELETE,

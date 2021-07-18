@@ -2,9 +2,17 @@ import logging
 import os
 import sys
 
-from itertools import groupby
+from itertools import groupby, islice
 from pathlib import Path
-from typing import Dict, Iterable, Optional, Union
+from typing import (
+    Dict,
+    Iterable,
+    Iterator,
+    List,
+    Optional,
+    TypeVar,
+    Union,
+)
 
 import fire  # type: ignore
 
@@ -133,16 +141,19 @@ class ChangemanZmf:
         self, package: str, pds: str, components: Iterable[str]
     ) -> None:
         """Checkin components to Changeman from a partitioned dataset (PDS)"""
-        for tp, comps in groupby(sorted(components, key=extension), extension):
-            self._put(
-                "component_checkin",
-                package=package,
-                chkInSourceLocation=SOURCE_LOCATION["development dataset"],
-                sourceStorageMeans=SOURCE_STORAGE["pds"],
-                componentType=tp.upper(),
-                sourceLib=pds + "." + tp.upper(),
-                targetComponent=[Path(c).stem for c in comps],
-            )
+        for group_type, comp_group in groupby(
+            sorted(components, key=extension), extension
+        ):
+            for comp_chunk in chunks(comp_group, 64):
+                self._put(
+                    "component_checkin",
+                    package=package,
+                    chkInSourceLocation=SOURCE_LOCATION["development dataset"],
+                    sourceStorageMeans=SOURCE_STORAGE["pds"],
+                    componentType=group_type.upper(),
+                    sourceLib=pds + "." + group_type.upper(),
+                    targetComponent=[Path(c).stem for c in comp_chunk],
+                )
 
     def delete(self, package: str, component: str, componentType: str) -> None:
         self._delete(
@@ -175,12 +186,14 @@ class ChangemanZmf:
             data["useDb2PreCompileOption"] = to_yes_no(db2Precompile)
         if useHistory is not None:
             data["useHistory"] = to_yes_no(useHistory)
-        for t, comps in groupby(sorted(components, key=extension), extension):
+        for t, comp_group in groupby(
+            sorted(components, key=extension), extension
+        ):
             self._put(
                 "component_build",
                 package=package,
                 componentType=t.upper(),
-                component=[Path(c).stem for c in comps],
+                component=[Path(c).stem for c in comp_group],
                 **jobcard_dict,
                 **data,
             )
@@ -212,7 +225,7 @@ class ChangemanZmf:
             data["overlayTargetComponents"] = to_yes_no(overlay)
         jobcard_dict = jobcard_s(self.__user, "promote")
         self._put(
-            "package/promote",
+            "package_promote",
             package=package,
             promotionSiteName=promSiteName,
             promotionLevel=promLevel,
@@ -231,7 +244,7 @@ class ChangemanZmf:
         """Demote a package"""
         jobcard_dict = jobcard_s(self.__user, "demote")
         self._put(
-            "package/demote",
+            "package_demote",
             package=package,
             promotionSiteName=promSiteName,
             promotionLevel=promLevel,
@@ -241,14 +254,14 @@ class ChangemanZmf:
 
     def freeze(self, package: str) -> None:
         jobcard_dict = jobcard(self.__user, "freeze")
-        self._put("package/freeze", package=package, **jobcard_dict)
+        self._put("package_freeze", package=package, **jobcard_dict)
 
     def revert(self, package: str, revertReason: Optional[str] = None) -> None:
         data = {}
         if revertReason is not None:
             data["revertReason01"] = revertReason
         jobcard_dict = jobcard(self.__user, "revert")
-        self._put("package/revert", package=package, **data, **jobcard_dict)
+        self._put("package_revert", package=package, **data, **jobcard_dict)
 
     def search_package(
         self,
@@ -424,14 +437,18 @@ class ChangemanZmf:
                 for key in ["content-type", "content-disposition"]
             }
         )
-        tp = resp.headers.get("content-type", "")
-        disp = resp.headers.get("content-disposition", "")
-        if tp.startswith("application/json"):
+        content_type = resp.headers.get("content-type", "")
+        content_disp = resp.headers.get("content-disposition", "")
+        if content_type.startswith("application/json"):
             self.logger.warning(resp.json())
-        elif tp.startswith("text/plain") and disp.startswith("attachment"):
+        elif content_type.startswith("text/plain") and content_disp.startswith(
+            "attachment"
+        ):
             result = resp.text
         else:
-            self.logger.error("Unexpected content-type '{}'".format(tp))
+            self.logger.error(
+                "Unexpected content-type '{}'".format(content_type)
+            )
             sys.exit(EXIT_CODE_ZMF_NOK)
         return result
 
@@ -447,6 +464,15 @@ def prepare_bools(
         key: to_yes_no(value) if type(value) is bool else value
         for key, value in params.items()
     }
+
+
+T = TypeVar("T")
+
+
+def chunks(it: Iterable[T], n: int) -> Iterator[List[T]]:
+    # Credits to https://stackoverflow.com/a/22045226/5498201
+    iterator = iter(it)
+    return iter(lambda: list(islice(iterator, n)), [])
 
 
 def extension(file: str) -> str:
