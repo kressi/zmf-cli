@@ -296,19 +296,16 @@ class ChangemanZmf:
             data["packageTitle"] = packageTitle
         if workChangeRequest is not None:
             data["workChangeRequest"] = workChangeRequest
-        result = self.__session.result_post("package", data=data)
+        result = self._post("package", **data)
         self.logger.info(result)
         return str_or_none(result[0].get("package")) if result else None
 
-    def delete_package(
-        self,
-        package: str,
-    ) -> None:
-        data = {
-            "package": package,
-            "processingOption": PROCESSING_OPTION["delete"],
-        }
-        self.__session.result_delete("package", data=data)
+    def delete_package(self, package: str) -> None:
+        self._delete(
+            "package",
+            package=package,
+            processingOption=PROCESSING_OPTION["delete"],
+        )
 
     def get_package(
         self,
@@ -360,7 +357,7 @@ class ChangemanZmf:
         filterIncomplete: Optional[bool] = None,
         filterInactive: Optional[bool] = None,
     ) -> Optional[ZmfResult]:
-        data = {"package": package}
+        data = {}
         if componentType is not None:
             data["componentType"] = componentType
         if component is not None:
@@ -373,7 +370,7 @@ class ChangemanZmf:
             data["filterIncompleteStatus"] = to_yes_no(filterIncomplete)
         if filterInactive is not None:
             data["filterInactiveStatus"] = to_yes_no(filterInactive)
-        return self.__session.result_get("component", data=data)
+        return self._get("component", package=package, **data)
 
     def get_load_components(
         self,
@@ -383,7 +380,7 @@ class ChangemanZmf:
         targetType: Optional[str] = None,
         targetComponent: Optional[str] = None,
     ) -> Optional[ZmfResult]:
-        data = {"package": package}
+        data = {}
         if sourceType is not None:
             data["componentType"] = sourceType
         if sourceComponent is not None:
@@ -392,7 +389,7 @@ class ChangemanZmf:
             data["targetComponentType"] = targetType
         if targetComponent is not None:
             data["targetComponent"] = targetComponent
-        return self.__session.result_get("component/load", data=data)
+        return self._get("component_load", package=package, **data)
 
     def get_package_list(
         self,
@@ -401,14 +398,14 @@ class ChangemanZmf:
         component: Optional[str] = None,
         targetComponent: Optional[str] = None,
     ) -> Optional[ZmfResult]:
-        data = {"package": package}
+        data = {}
         if componentType is not None:
             data["sourceComponentType"] = componentType
         if component is not None:
             data["sourceComponent"] = component
         if targetComponent is not None:
             data["targetComponent"] = targetComponent
-        return self.__session.result_get("component/packagelist", data=data)
+        return self._get("component_packagelist", package=package, **data)
 
     def browse_component(
         self, package: str, component: str, componentType: str
@@ -423,8 +420,8 @@ class ChangemanZmf:
         exit_nok(resp, logger=self.logger)
         self.logger.info(
             {
-                k: resp.headers.get(k)
-                for k in ["content-type", "content-disposition"]
+                key: resp.headers.get(key)
+                for key in ["content-type", "content-disposition"]
             }
         )
         tp = resp.headers.get("content-type", "")
